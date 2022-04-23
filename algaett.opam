@@ -1,0 +1,25 @@
+opam-version: "2.0"
+name: "algaett"
+synopsis: "algaett"
+description: "Effect-Based Proof Assistant"
+maintainer: "favonia <favonia@gmail.com>"
+authors: "The RedPRL Development Team"
+license: "Apache-2.0"
+homepage: "https://github.com/RedPRL/algaett"
+bug-reports: "https://github.com/RedPRL/algaett/issues"
+dev-repo: "git+https://github.com/RedPRL/algaett.git"
+depends: [
+  "dune" {>= "2.0"}
+  "base-domains"
+  "bwd" {>= "1.1"}
+  "odoc" {with-doc}
+  "algaeff"
+]
+pin-depends: [
+  [ "algaeff.~dev" "git+https://github.com/RedPRL/algaeff" ]
+]
+build: [
+  ["dune" "build" "-p" name "-j" jobs]
+  ["dune" "build" "-p" name "-j" jobs "@runtest"] {with-test}
+  ["dune" "build" "-p" name "-j" jobs "@doc"] {with-doc}
+]

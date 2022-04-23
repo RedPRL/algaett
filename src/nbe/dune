@@ -1,0 +1,4 @@
+(library
+ (name NbE)
+ (libraries bwd algaeff)
+ (public_name algaett.nbe))
