@@ -46,6 +46,12 @@ struct
     | D.Pair (_, t1) -> t1
     | _ -> invalid_arg "Evaluation.snd"
 
+  and eval_ulvl =
+    let module M = Mugenjou.Syntax in
+    function
+    | M.Top -> D.ULvlBuilder.top
+    | M.Shifted (ulvl, s) -> D.ULvlBuilder.shifted (eval ulvl) s
+
   and eval : S.t -> D.t =
     function
     | S.Var idx -> of_idx idx
@@ -57,7 +63,8 @@ struct
     | S.Pair (t0, t1) -> D.Pair (eval t0, eval t1)
     | S.Fst t -> fst (eval t)
     | S.Snd t -> snd (eval t)
-    | S.Univ -> D.Univ
+    | S.Univ t -> D.Univ (eval t)
+    | S.ULvl l -> eval_ulvl l
 end
 
 type env = Internal.env =

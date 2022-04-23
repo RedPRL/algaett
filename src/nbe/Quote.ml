@@ -24,7 +24,14 @@ struct
       S.pi (quote_con base) (quote_clo fam)
     | D.Sigma (base, fam) ->
       S.sigma (quote_con base) (quote_clo fam)
-    | _ -> invalid_arg "quote_con"
+    | D.Univ t -> S.univ (quote_con t)
+    | D.ULvl l -> S.ulvl (quote_ulvl l)
+
+  and quote_ulvl =
+    let module M = Mugenjou.Syntax in
+    function
+    | M.Top -> M.Top
+    | M.Shifted (ulvl, s) -> M.Shifted (quote_con ulvl, s)
 
   and quote_clo clo =
     bind @@ fun arg -> quote_con (Sem.inst_clo clo ~arg)

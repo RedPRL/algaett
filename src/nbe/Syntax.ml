@@ -8,7 +8,8 @@ type t =
   | Pair of t * t
   | Fst of t
   | Snd of t
-  | Univ
+  | Univ of t
+  | ULvl of (Mugenjou.Shift.gapped, t) Mugenjou.Syntax.endo
 
 let var v = Var v
 let global p = Global p
@@ -19,3 +20,5 @@ let sigma base fam = Sigma (base, fam)
 let pair t0 t1 = Pair (t0, t1)
 let fst t = Fst t
 let snd t = Snd t
+let univ t = Univ t
+let ulvl l = ULvl l
