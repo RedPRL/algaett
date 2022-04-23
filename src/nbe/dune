@@ -1,4 +1,4 @@
 (library
  (name NbE)
- (libraries bwd algaeff)
+ (libraries bwd algaeff yuujinchou)
  (public_name algaett.nbe))

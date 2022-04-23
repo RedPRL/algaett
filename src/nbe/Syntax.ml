@@ -1,5 +1,6 @@
 type t =
   | Var of int
+  | Global of Yuujinchou.Trie.path
   | Pi of t * (* binding *) t
   | Lambda of (* binding *) t
   | App of t * t
@@ -10,6 +11,7 @@ type t =
   | Univ
 
 let var v = Var v
+let global p = Global p
 let pi base fam = Pi (base, fam)
 let lam b = Lambda b
 let app t0 t1 = App (t0, t1)

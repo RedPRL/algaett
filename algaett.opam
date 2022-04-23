@@ -14,9 +14,11 @@ depends: [
   "bwd" {>= "1.1"}
   "odoc" {with-doc}
   "algaeff"
+  "yuujinchou"
 ]
 pin-depends: [
   [ "algaeff.~dev" "git+https://github.com/RedPRL/algaeff" ]
+  [ "yuujinchou.~dev" "git+https://github.com/RedPRL/yuujinchou" ]
 ]
 build: [
   ["dune" "build" "-p" name "-j" jobs]
