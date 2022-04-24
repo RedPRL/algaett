@@ -29,11 +29,20 @@ type t = con
 
 let lvl l = Cut (Lvl l, Emp)
 
-module ULvlBuilder =
-  Mugenjou.Builder.Endo.Make
-    (struct
-      module Shift = Mugenjou.Shift.Gapped
-      type level = t
-      let level l = ULvl l
-      let unlevel = function ULvl l -> Some l | _ -> None
-    end)
+module ULvl =
+struct
+  include Mugenjou.Builder.Endo.Make
+      (struct
+        module Shift = Mugenjou.Shift.Gapped
+        type level = t
+        let level l = ULvl l
+        let unlevel = function ULvl l -> Some l | _ -> None
+      end)
+
+  let rec of_con =
+    function
+    | Cut (Lvl i, Emp) -> Mugenjou.Syntax.Free.var i
+    | ULvl Mugenjou.Syntax.Shifted (l, s) -> Mugenjou.Syntax.Free.shifted (of_con l) s
+    | ULvl Mugenjou.Syntax.Top -> Mugenjou.Syntax.Free.top
+    | _ -> invalid_arg "of_con"
+end

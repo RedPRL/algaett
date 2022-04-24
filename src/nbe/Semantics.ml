@@ -56,8 +56,8 @@ struct
   and eval_ulvl =
     let module M = Mugenjou.Syntax in
     function
-    | M.Top -> D.ULvlBuilder.top
-    | M.Shifted (ulvl, s) -> D.ULvlBuilder.shifted (eval ulvl) s
+    | M.Top -> D.ULvl.top
+    | M.Shifted (ulvl, s) -> D.ULvl.shifted (eval ulvl) s
 
   and eval : S.t -> D.t =
     function

@@ -1,7 +1,7 @@
 opam-version: "2.0"
 name: "algaett"
-synopsis: "algaett"
-description: "Effect-Based Proof Assistant"
+synopsis: "The algaett's not algaeff"
+description: "A modular, effect-Based proof assistant"
 maintainer: "favonia <favonia@gmail.com>"
 authors: "The RedPRL Development Team"
 license: "Apache-2.0"
@@ -20,7 +20,7 @@ depends: [
 pin-depends: [
   [ "algaeff.~dev" "git+https://github.com/RedPRL/algaeff" ]
   [ "mugenjou.~dev" "git+https://github.com/RedPRL/mugenjou" ]
-  [ "yuujinchou.~dev" "git+https://github.com/RedPRL/yuujinchou" ]
+  [ "yuujinchou.3.0.0" "git+https://github.com/RedPRL/yuujinchou" ]
 ]
 build: [
   ["dune" "build" "-p" name "-j" jobs]

@@ -6,6 +6,8 @@ A demonstration of how the following modules fit together:
 - [yuujinchou](https://redprl.org/yuujinchou/yuujinchou/Yuujinchou): namespaces
 - [mugenjou](https://redprl.org/mugenjou/mugenjou/Mugenjou): universe levels
 
+Many ideas stolen from [András Kovács’s smalltt.](https://github.com/AndrasKovacs/smalltt)
+
 ## Documentation
 
 [Here is the API documentation.](https://redprl.org/algaett/algaett/Algaett)
