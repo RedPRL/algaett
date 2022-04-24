@@ -2,11 +2,12 @@ open Bwd
 
 module S = Syntax
 
-type env = con Lazy.t bwd (* invariant: lazy values must be effect-less *)
-and closure = Clo of {body : S.t; env : env}
-and con =
-  | Cut of cut
-  | Unfold of unfold
+type env = Data.value Lazy.t bwd (* invariant: lazy values must be effect-less *)
+
+type closure = Data.closure = Clo of {body : S.t; env : env}
+type con = Data.value =
+  | Cut of Data.cut
+  | Unfold of Data.unfold
   | Pi of con * closure
   | Lam of closure
   | Sigma of con * closure
@@ -14,14 +15,14 @@ and con =
   | Univ of con
   | TpULvl
   | ULvl of (Mugenjou.Shift.gapped, con) Mugenjou.Syntax.endo
-and cut = cut_head * frame bwd
-and unfold = unfold_head * frame bwd * con Lazy.t (* invariant: lazy values must be effect-less *)
-and cut_head =
+type cut = Data.cut
+type unfold = Data.unfold
+type cut_head = Data.cut_head =
   | Lvl of int
   | Axiom of Yuujinchou.Trie.path (* not used for now *)
-and unfold_head =
-  | Global of Yuujinchou.Trie.path
-and frame =
+type unfold_head = Data.unfold_head =
+  | Def of Yuujinchou.Trie.path * con
+type frame = Data.frame =
   | App of con
   | Fst
   | Snd
@@ -29,6 +30,7 @@ and frame =
 type t = con
 
 let lvl l = Cut (Lvl l, Emp)
+let def p v = Unfold (Def (p, v), Emp, Lazy.from_val v)
 
 module ULvl =
 struct

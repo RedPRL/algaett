@@ -2,6 +2,11 @@ open Bwd
 
 module D = Domain
 
+let rec force_all =
+  function
+  | D.Unfold (_, _, v) -> force_all (Lazy.force v)
+  | v -> v
+
 type env =
   { mode : [`Rigid | `Flex | `Full];
     size : int }
@@ -10,11 +15,6 @@ module Eff = Algaeff.Reader.Make (struct type nonrec env = env end)
 
 let with_mode s f =
   Eff.scope (fun env -> {env with mode = s}) f
-
-let rec force_all =
-  function
-  | D.Unfold (_, _, v) -> force_all (Lazy.force v)
-  | v -> v
 
 let force x =
   match (Eff.read()).mode with
@@ -37,7 +37,7 @@ module ULvl = Mugenjou.Theory.Make
 
 let equal_unfold_hd h1 h2 =
   match h1, h2 with
-  | D.Global p1, D.Global p2 -> List.equal String.equal p1 p2
+  | D.Def (p1, _), D.Def (p2, _) -> List.equal String.equal p1 p2
 
 let equate_cut_hd h1 h2 =
   match h1, h2 with

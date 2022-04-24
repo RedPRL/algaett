@@ -1,0 +1,40 @@
+open Bwd
+
+[@@@warning "-30"]
+type syn =
+  | Var of int
+  | Axiom of Yuujinchou.Trie.path
+  | Def of Yuujinchou.Trie.path * value
+  | Pi of syn * (* binding *) syn
+  | Lam of (* binding *) syn
+  | App of syn * syn
+  | Sigma of syn * (* binding *) syn
+  | Pair of syn * syn
+  | Fst of syn
+  | Snd of syn
+  | Univ of syn
+  | TpULvl
+  | ULvl of (Mugenjou.Shift.gapped, syn) Mugenjou.Syntax.endo
+and env = value Lazy.t bwd (* invariant: lazy values must be effect-less *)
+and closure = Clo of {body : syn; env : env}
+and value =
+  | Cut of cut
+  | Unfold of unfold
+  | Pi of value * closure
+  | Lam of closure
+  | Sigma of value * closure
+  | Pair of value * value
+  | Univ of value
+  | TpULvl
+  | ULvl of (Mugenjou.Shift.gapped, value) Mugenjou.Syntax.endo
+and cut = cut_head * frame bwd
+and unfold = unfold_head * frame bwd * value Lazy.t (* invariant: lazy values must be effect-less *)
+and cut_head =
+  | Lvl of int
+  | Axiom of Yuujinchou.Trie.path (* not used for now *)
+and unfold_head =
+  | Def of Yuujinchou.Trie.path * value
+and frame =
+  | App of value
+  | Fst
+  | Snd

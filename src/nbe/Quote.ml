@@ -44,14 +44,14 @@ struct
   and quote_cut_hd =
     function
     | D.Lvl l -> S.var @@ Eff.read() - l - 1
-    | D.Axiom p -> S.global p
+    | D.Axiom p -> S.axiom p
 
   and quote_unfold (hd, frms, _) =
     BwdLabels.fold_left ~f:quote_frm ~init:(quote_unfold_hd hd) frms
 
   and quote_unfold_hd =
     function
-    | D.Global p -> S.global p
+    | D.Def (p, v) -> S.def p v
 
   and quote_frm hd : D.frame -> S.t =
     function

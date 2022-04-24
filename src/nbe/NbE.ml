@@ -11,4 +11,5 @@ let eval = Semantics.eval
 let quote_con = Quote.con
 let quote_cut = Quote.cut
 
+let force_all = Conversion.force_all
 let equate = Conversion.equate

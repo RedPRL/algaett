@@ -1,6 +1,7 @@
-type t =
+type t = Data.syn =
   | Var of int
-  | Global of Yuujinchou.Trie.path
+  | Axiom of Yuujinchou.Trie.path
+  | Def of Yuujinchou.Trie.path * Data.value
   | Pi of t * (* binding *) t
   | Lam of (* binding *) t
   | App of t * t
@@ -13,7 +14,8 @@ type t =
   | ULvl of (Mugenjou.Shift.gapped, t) Mugenjou.Syntax.endo
 
 let var v = Var v
-let global p = Global p
+let axiom p = Axiom p
+let def p v = Def (p, v)
 let pi base fam = Pi (base, fam)
 let lam b = Lam b
 let app t0 t1 = App (t0, t1)

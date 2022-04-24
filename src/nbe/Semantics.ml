@@ -7,21 +7,15 @@ module D = Domain
 module Internal =
 struct
   type locals = D.env
-  type resolve = Yuujinchou.Trie.path -> Domain.t option
-  type env = { locals : locals; resolve : resolve }
+  type env = { locals : locals }
   module Eff = Algaeff.Reader.Make (struct type nonrec env = env end)
 
   let make_clo body = D.Clo {body; env = (Eff.read()).locals}
 
-  exception Unresolved of Yuujinchou.Trie.path
   let of_idx idx = BwdLabels.nth (Eff.read()).locals idx
-  let of_global p =
-    match (Eff.read()).resolve p with
-    | Some tm -> D.Unfold (Global p, Emp, Lazy.from_val tm)
-    | None -> raise (Unresolved p)
 
   let rec inst_clo (D.Clo {body; env}) ~arg : D.t =
-    let env = {(Eff.read()) with locals = env #< arg} in
+    let env = {locals = env #< arg} in
     Eff.run ~env @@ fun () -> eval body
 
   and inst_clo' clo ~arg = inst_clo clo ~arg:(Lazy.from_val arg)
@@ -62,7 +56,8 @@ struct
   and eval : S.t -> D.t =
     function
     | S.Var idx -> Lazy.force (of_idx idx)
-    | S.Global p -> of_global p
+    | S.Axiom p -> D.Cut (D.Axiom p, Emp)
+    | S.Def (p, v) -> D.def p v
     | S.Pi (base, (* binding *) fam) -> D.Pi (eval base, make_clo fam)
     | S.Lam (* binding *) body -> D.Lam (make_clo body)
     | S.App (tm0, tm1) -> app (eval tm0) (eval tm1)
@@ -76,8 +71,7 @@ struct
 end
 
 type locals = Internal.locals
-type resolve = Internal.resolve
-type env = Internal.env = { locals : locals; resolve : resolve }
+type env = Internal.env = { locals : locals }
 
 let app = Internal.app
 let fst = Internal.fst
@@ -85,4 +79,4 @@ let snd = Internal.snd
 
 let inst_clo = Internal.inst_clo
 let inst_clo' = Internal.inst_clo'
-let eval ~locals ~resolve tm = Internal.Eff.run ~env:{locals; resolve} @@ fun () -> Internal.eval tm
+let eval ~locals tm = Internal.Eff.run ~env:{locals} @@ fun () -> Internal.eval tm
