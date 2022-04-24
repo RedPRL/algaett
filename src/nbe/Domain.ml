@@ -44,5 +44,6 @@ struct
     | Cut (Lvl i, Emp) -> Mugenjou.Syntax.Free.var i
     | ULvl Mugenjou.Syntax.Shifted (l, s) -> Mugenjou.Syntax.Free.shifted (of_con l) s
     | ULvl Mugenjou.Syntax.Top -> Mugenjou.Syntax.Free.top
+    | Unfold (_, _, v) -> of_con (Lazy.force v)
     | _ -> invalid_arg "of_con"
 end

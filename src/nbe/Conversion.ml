@@ -45,7 +45,6 @@ let equate_cut_hd h1 h2 =
   | D.Axiom p1, D.Axiom p2 when List.equal String.equal p1 p2 -> ()
   | _ -> raise Unequal
 
-(* XXX This assumes there's no Domain.Unfold within universe levels *)
 let equate_ulvl l1 l2 =
   if ULvl.equal (D.ULvl.of_con l1) (D.ULvl.of_con l2) then () else raise Unequal
 
