@@ -24,9 +24,11 @@ struct
     let env = {(Eff.read()) with locals = env #< arg} in
     Eff.run ~env @@ fun () -> eval body
 
+  and inst_clo' clo ~arg = inst_clo clo ~arg:(Lazy.from_val arg)
+
   and app v0 v1 =
     match v0 with
-    | D.Lambda clo -> inst_clo clo ~arg:(Lazy.from_val v1)
+    | D.Lambda clo -> inst_clo' clo ~arg:v1
     | D.Cut (hd, frms) ->
       D.Cut (hd, frms #< (D.App v1))
     | D.Unfold (hd, frms, v0) ->
@@ -81,4 +83,5 @@ let fst = Internal.fst
 let snd = Internal.snd
 
 let inst_clo = Internal.inst_clo
+let inst_clo' = Internal.inst_clo'
 let eval ~locals ~resolve tm = Internal.Eff.run ~env:{locals; resolve} @@ fun () -> Internal.eval tm

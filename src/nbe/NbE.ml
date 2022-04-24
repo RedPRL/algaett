@@ -7,4 +7,5 @@ let app = Semantics.app
 let fst = Semantics.fst
 let snd = Semantics.snd
 let inst_clo = Semantics.inst_clo
+let inst_clo' = Semantics.inst_clo'
 let eval ~locals ~resolve tm = Semantics.eval ~locals ~resolve tm

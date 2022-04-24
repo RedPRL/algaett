@@ -10,7 +10,7 @@ struct
 
   let bind f =
     let arg = D.lvl @@ Eff.read() in
-    Eff.scope (fun lvl -> lvl + 1) @@ fun () ->
+    Eff.scope (fun size -> size + 1) @@ fun () ->
     f arg
 
   let rec quote_con =
@@ -35,7 +35,7 @@ struct
     | M.Shifted (ulvl, s) -> M.Shifted (quote_con ulvl, s)
 
   and quote_clo clo =
-    bind @@ fun arg -> quote_con (Sem.inst_clo clo ~arg:(Lazy.from_val arg))
+    bind @@ fun arg -> quote_con (Sem.inst_clo' clo ~arg)
 
   and quote_cut (hd, frms) =
     BwdLabels.fold_left ~f:quote_frm ~init:(quote_cut_hd hd) frms
