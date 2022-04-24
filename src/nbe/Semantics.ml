@@ -6,9 +6,9 @@ module D = Domain
 
 module Internal =
 struct
-  type env =
-    { locals : D.env;
-      resolve : Yuujinchou.Trie.path -> Domain.t option }
+  type locals = D.env
+  type resolve = Yuujinchou.Trie.path -> Domain.t option
+  type env = { locals : locals; resolve : resolve }
   module Eff = Algaeff.Reader.Make (struct type nonrec env = env end)
 
   let make_clo body = D.Clo {body; env = (Eff.read()).locals}
@@ -72,13 +72,13 @@ struct
     | S.ULvl l -> eval_ulvl l
 end
 
-type env = Internal.env =
-  { locals : Domain.env;
-    resolve : Yuujinchou.Trie.path -> Domain.t option }
+type locals = Internal.locals
+type resolve = Internal.resolve
+type env = Internal.env = { locals : locals; resolve : resolve }
 
 let app = Internal.app
 let fst = Internal.fst
 let snd = Internal.snd
 
 let inst_clo = Internal.inst_clo
-let eval ~env tm = Internal.Eff.run ~env @@ fun () -> Internal.eval tm
+let eval ~locals ~resolve tm = Internal.Eff.run ~env:{locals; resolve} @@ fun () -> Internal.eval tm
