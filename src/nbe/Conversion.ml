@@ -58,7 +58,7 @@ let rec equate v1 v2 =
   | D.Pi (b1, f1), D.Pi (b2, f2), _ ->
     equate b1 b2;
     equate_clo f1 f2
-  | D.Lambda c1, D.Lambda c2, _ ->
+  | D.Lam c1, D.Lam c2, _ ->
     equate_clo c1 c2
   | D.Sigma (b1, f1), D.Sigma (b2, f2), _ ->
     equate b1 b2;
@@ -95,7 +95,7 @@ let rec equate v1 v2 =
 
 and equate_cold v1 v2 =
   match v1, v2 with
-  | D.Cut (hd, sp), D.Lambda clo | D.Lambda clo, D.Cut (hd, sp) ->
+  | D.Cut (hd, sp), D.Lam clo | D.Lam clo, D.Cut (hd, sp) ->
     bind @@ fun arg -> equate_spine_cold (hd, Snoc (sp, D.App arg)) (Semantics.inst_clo' clo ~arg)
   | D.Cut (hd, sp), D.Pair (v1, v2) | D.Pair (v1, v2), D.Cut (hd, sp) ->
     equate_spine_cold (hd, Snoc (sp, D.Fst)) v1;
@@ -106,7 +106,7 @@ and equate_spine_cold (hd1, sp1) v =
   match force v with
   | D.Cut (hd2, sp2) when hd1 = hd2 -> equate_spine sp1 sp2
   | D.Cut _ -> raise Unequal
-  | D.Lambda clo -> bind @@ fun arg ->
+  | D.Lam clo -> bind @@ fun arg ->
     equate_spine_cold (hd1, Snoc (sp1, D.App arg)) (Semantics.inst_clo' clo ~arg)
   | D.Pair (v1, v2) ->
     equate_spine_cold (hd1, Snoc (sp1, D.Fst)) v1;

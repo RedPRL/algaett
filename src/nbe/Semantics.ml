@@ -28,7 +28,7 @@ struct
 
   and app v0 v1 =
     match v0 with
-    | D.Lambda clo -> inst_clo' clo ~arg:v1
+    | D.Lam clo -> inst_clo' clo ~arg:v1
     | D.Cut (hd, frms) ->
       D.Cut (hd, frms #< (D.App v1))
     | D.Unfold (hd, frms, v0) ->
@@ -64,13 +64,14 @@ struct
     | S.Var idx -> Lazy.force (of_idx idx)
     | S.Global p -> of_global p
     | S.Pi (base, (* binding *) fam) -> D.Pi (eval base, make_clo fam)
-    | S.Lambda (* binding *) body -> D.Lambda (make_clo body)
+    | S.Lam (* binding *) body -> D.Lam (make_clo body)
     | S.App (tm0, tm1) -> app (eval tm0) (eval tm1)
     | S.Sigma (base, (* binding *) fam) -> D.Sigma (eval base, make_clo fam)
     | S.Pair (t0, t1) -> D.Pair (eval t0, eval t1)
     | S.Fst t -> fst (eval t)
     | S.Snd t -> snd (eval t)
     | S.Univ t -> D.Univ (eval t)
+    | S.TpULvl -> D.TpULvl
     | S.ULvl l -> eval_ulvl l
 end
 

@@ -17,7 +17,7 @@ struct
     function
     | D.Cut cut -> quote_cut cut
     | D.Unfold unfold -> quote_unfold unfold
-    | D.Lambda clo ->
+    | D.Lam clo ->
       S.lam @@ quote_clo clo
     | D.Pair (v1, v2) ->
       S.pair (quote_con v1) (quote_con v2)
@@ -26,6 +26,7 @@ struct
     | D.Sigma (base, fam) ->
       S.sigma (quote_con base) (quote_clo fam)
     | D.Univ v -> S.univ (quote_con v)
+    | D.TpULvl -> S.tp_ulvl
     | D.ULvl l -> S.ulvl (quote_ulvl l)
 
   and quote_ulvl =

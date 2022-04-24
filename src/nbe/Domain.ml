@@ -8,10 +8,11 @@ and con =
   | Cut of cut
   | Unfold of unfold
   | Pi of con * closure
-  | Lambda of closure
+  | Lam of closure
   | Sigma of con * closure
   | Pair of con * con
   | Univ of con
+  | TpULvl
   | ULvl of (Mugenjou.Shift.gapped, con) Mugenjou.Syntax.endo
 and cut = cut_head * frame bwd
 and unfold = unfold_head * frame bwd * con Lazy.t (* invariant: lazy values must be effect-less *)
