@@ -1,12 +1,14 @@
 open Algaeff.StdlibShim
 
-type data = Def of {tm: NbE.Domain.t; tp: NbE.Domain.t}
+type data =
+  | Axiom of {tp : NbE.Domain.t}
+  | Def of {tm: NbE.Domain.t; tp: NbE.Domain.t}
 type empty = |
 module S = Yuujinchou.Scope.Make (struct type nonrec data = data type hook = empty end)
 
-let run f =
+let run ?prefix f =
   let open Effect.Deep in
-  try_with S.run f
+  try_with (S.run ?prefix) f
     { effc = fun (type a) (eff : a Effect.t) ->
           match eff with
           | S.Act.BindingNotFound _ -> Option.some @@

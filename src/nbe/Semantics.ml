@@ -82,3 +82,4 @@ let snd = Internal.snd
 let inst_clo = Internal.inst_clo
 let inst_clo' = Internal.inst_clo'
 let eval ~locals tm = Internal.Eff.run ~env:{locals} @@ fun () -> Internal.eval tm
+let eval_top tm = eval ~locals:Emp tm

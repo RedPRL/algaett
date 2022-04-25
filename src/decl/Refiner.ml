@@ -50,7 +50,7 @@ end
 let rec infer tm =
   match tm.CS.node with
   | CS.Ann {tm; tp} ->
-    let tp = eval @@ check ~tp:(D.Univ D.ULvl.top) tp in
+    let tp = eval @@ check ~tp:D.univ_top tp in
     check ~tp tm, tp
   | CS.Var p ->
     begin
@@ -58,6 +58,7 @@ let rec infer tm =
       | Some {tm; tp} -> quote tm, tp
       | None ->
         match Scope.resolve p with
+        | Some Scope.Axiom {tp} -> S.axiom p, tp
         | Some Scope.Def {tp; tm} -> S.def p tm, tp
         | None -> raise NotInScope
     end
@@ -119,7 +120,7 @@ and check tm ~tp =
     let vsmall = eval small in
     if UL.(<) (UL.of_con vsmall) (UL.of_con large) then S.univ small else raise IllTyped
   | CS.VirPi (base, name, fam), D.Univ _ ->
-    let base = check ~tp:D.VirUniv base
+    let base = check ~tp:D.vir_univ base
     and fam = bind ~name ~tp @@ fun _ -> check ~tp fam
     in
     S.pi base fam

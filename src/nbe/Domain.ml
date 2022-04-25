@@ -42,3 +42,6 @@ module ULvl =
       let level l = ULvl l
       let unlevel = function ULvl l -> Some l | _ -> None
     end)
+
+let univ_top = Univ ULvl.top
+let vir_univ = Univ ULvl.top

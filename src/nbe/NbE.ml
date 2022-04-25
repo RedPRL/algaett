@@ -2,12 +2,10 @@ module ULvl = ULvl
 module Domain = Domain
 module Syntax = Syntax
 
-let app = Semantics.app
-let fst = Semantics.fst
-let snd = Semantics.snd
 let inst_clo = Semantics.inst_clo
 let inst_clo' = Semantics.inst_clo'
 let eval = Semantics.eval
+let eval_top = Semantics.eval_top
 
 let quote = Quote.con
 
