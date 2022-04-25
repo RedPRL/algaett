@@ -5,6 +5,9 @@ module S = Yuujinchou.Scope.Make (struct type nonrec data = Decl.data type hook 
 
 exception NotInScope
 
+let include_singleton = S.include_singleton
+let section = S.section
+
 let handle_resolve f () =
   let open Effect.Deep in
   try_with f ()
@@ -18,9 +21,9 @@ let handle_resolve f () =
                 | Some data -> data)
           | _ -> None }
 
-let run ?prefix f =
+let run f =
   let open Effect.Deep in
-  try_with (S.run ?prefix) (handle_resolve f)
+  try_with (S.run ~prefix:Emp) (handle_resolve f)
     { effc = fun (type a) (eff : a Effect.t) ->
           match eff with
           | S.Act.BindingNotFound _ -> Option.some @@
@@ -29,6 +32,3 @@ let run ?prefix f =
             fun (k : (a, _) continuation) -> continue k new_data
           | S.Act.Hook (_, _, _, _) -> .
           | _ -> None }
-
-let include_singleton = S.include_singleton
-let section = S.section
