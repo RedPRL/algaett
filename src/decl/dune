@@ -1,0 +1,4 @@
+(library
+ (name Decl)
+ (libraries bwd algaeff mugenjou yuujinchou algaett.nbe)
+ (public_name algaett.decl))
