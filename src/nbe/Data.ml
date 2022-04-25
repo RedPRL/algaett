@@ -13,8 +13,10 @@ type syn =
   | Fst of syn
   | Snd of syn
   | Univ of syn
+  | VirPi of syn * (* binding *) syn
   | TpULvl
   | ULvl of (Mugenjou.Shift.gapped, syn) Mugenjou.Syntax.endo
+  | VirUniv
 and env = value Lazy.t bwd (* invariant: lazy values must be effect-less *)
 and closure = Clo of {body : syn; env : env}
 and value =
@@ -25,8 +27,10 @@ and value =
   | Sigma of value * closure
   | Pair of value * value
   | Univ of value
+  | VirPi of value * closure
   | TpULvl
   | ULvl of (Mugenjou.Shift.gapped, value) Mugenjou.Syntax.endo
+  | VirUniv
 and cut = cut_head * frame bwd
 and unfold = unfold_head * frame bwd * value Lazy.t (* invariant: lazy values must be effect-less *)
 and cut_head =

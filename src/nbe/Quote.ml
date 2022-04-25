@@ -26,8 +26,11 @@ struct
     | D.Sigma (base, fam) ->
       S.sigma (quote_con base) (quote_clo fam)
     | D.Univ v -> S.univ (quote_con v)
+    | D.VirPi (base, fam) ->
+      S.vir_pi (quote_con base) (quote_clo fam)
     | D.TpULvl -> S.tp_ulvl
     | D.ULvl l -> S.ulvl (quote_ulvl l)
+    | D.VirUniv -> S.vir_univ
 
   and quote_ulvl =
     let module M = Mugenjou.Syntax in
@@ -36,7 +39,7 @@ struct
     | M.Shifted (ulvl, s) -> M.Shifted (quote_con ulvl, s)
 
   and quote_clo clo =
-    bind @@ fun arg -> quote_con (Sem.inst_clo' clo ~arg)
+    bind @@ fun arg -> quote_con (Sem.inst_clo' clo arg)
 
   and quote_cut (hd, frms) =
     BwdLabels.fold_left ~f:quote_frm ~init:(quote_cut_hd hd) frms

@@ -14,15 +14,15 @@ struct
 
   let of_idx idx = BwdLabels.nth (Eff.read()).locals idx
 
-  let rec inst_clo (D.Clo {body; env}) ~arg : D.t =
+  let rec inst_clo (D.Clo {body; env}) arg : D.t =
     let env = {locals = env #< arg} in
     Eff.run ~env @@ fun () -> eval body
 
-  and inst_clo' clo ~arg = inst_clo clo ~arg:(Lazy.from_val arg)
+  and inst_clo' clo arg = inst_clo clo @@ Lazy.from_val arg
 
   and app v0 v1 =
     match v0 with
-    | D.Lam clo -> inst_clo' clo ~arg:v1
+    | D.Lam clo -> inst_clo' clo v1
     | D.Cut (hd, frms) ->
       D.Cut (hd, frms #< (D.App v1))
     | D.Unfold (hd, frms, v0) ->
@@ -66,8 +66,10 @@ struct
     | S.Fst t -> fst (eval t)
     | S.Snd t -> snd (eval t)
     | S.Univ t -> D.Univ (eval t)
+    | S.VirPi (base, (* binding *) fam) -> D.VirPi (eval base, make_clo fam)
     | S.TpULvl -> D.TpULvl
     | S.ULvl l -> eval_ulvl l
+    | S.VirUniv -> D.VirUniv
 end
 
 type locals = Internal.locals

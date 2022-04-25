@@ -10,8 +10,10 @@ type t = Data.syn =
   | Fst of t
   | Snd of t
   | Univ of t
+  | VirPi of t * (* binding *) t
   | TpULvl
   | ULvl of (Mugenjou.Shift.gapped, t) Mugenjou.Syntax.endo
+  | VirUniv
 
 let var v = Var v
 let axiom p = Axiom p
@@ -24,5 +26,16 @@ let pair t0 t1 = Pair (t0, t1)
 let fst t = Fst t
 let snd t = Snd t
 let univ t = Univ t
+let vir_pi base fam = VirPi (base, fam)
 let tp_ulvl = TpULvl
 let ulvl l = ULvl l
+let vir_univ = VirUniv
+
+module ULvl =
+  Mugenjou.Builder.Endo.Make
+    (struct
+      module Shift = Mugenjou.Shift.Gapped
+      type level = t
+      let level l = ULvl l
+      let unlevel = function ULvl l -> Some l | _ -> None
+    end)
