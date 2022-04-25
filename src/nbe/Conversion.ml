@@ -93,7 +93,10 @@ let rec equate v1 dir v2 =
       try
         with_mode `Flex @@ fun () -> equate_spine sp1 sp2
       with Unequal ->
-        (* in the smalltt, the mode is changed to `Full directly. why not `Rigid? *)
+        (* In smalltt, the mode is changed to `Full directly. why not `Rigid?
+           According to Andras, using `Rigid here will probably make the elaborator too optimistic,
+           backtracking too many times, but this claim has not been carefully verified against
+           "real" codebase. *)
         with_mode `Full @@ fun () -> equate (Lazy.force v1) dir (Lazy.force v2)
     else
       equate (Lazy.force v1) dir (Lazy.force v2)
