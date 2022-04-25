@@ -22,9 +22,6 @@ let empty_env = {
 
 module Eff = Algaeff.Reader.Make (struct type nonrec env = env end)
 
-exception NotInScope
-exception IllTyped
-
 open struct
   (* invariant: the return values must be effect-less *)
 
@@ -47,6 +44,17 @@ open struct
     @@ fun () -> f arg
 end
 
+include struct
+  type data =
+    | Axiom of {tp : NbE.Domain.t}
+    | Def of {tm: NbE.Domain.t; tp: NbE.Domain.t}
+  type _ Effect.t += Resolve : Yuujinchou.Trie.path -> data Effect.t
+
+  let resolve p = Effect.perform (Resolve p)
+end
+
+exception IllTyped
+
 let rec infer tm =
   match tm.CS.node with
   | CS.Ann {tm; tp} ->
@@ -57,10 +65,9 @@ let rec infer tm =
       match resolve_local p with
       | Some {tm; tp} -> quote tm, tp
       | None ->
-        match Scope.resolve p with
-        | Some Scope.Axiom {tp} -> S.axiom p, tp
-        | Some Scope.Def {tp; tm} -> S.def p tm, tp
-        | None -> raise NotInScope
+        match resolve p with
+        | Axiom {tp} -> S.axiom p, tp
+        | Def {tp; tm} -> S.def p tm, tp
     end
   | CS.App (tm1, tm2) ->
     begin

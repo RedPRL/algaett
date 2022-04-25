@@ -5,7 +5,7 @@ exception Quit
 let include_singleton name data =
   match name with
   | None -> ()
-  | Some p -> Decl.include_singleton (p, data)
+  | Some p -> Scope.include_singleton (p, data)
 
 let rec execute decl =
   match decl.CS.node with
@@ -17,5 +17,5 @@ let rec execute decl =
     let tm = NbE.eval_top @@ Decl.check_top tm ~tp in
     include_singleton name @@ Def {tm; tp}
   | CS.Section {prefix; block} ->
-    Decl.section prefix @@ fun () -> List.iter execute block
+    Scope.section prefix @@ fun () -> List.iter execute block
   | CS.Quit -> raise Quit
