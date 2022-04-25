@@ -47,7 +47,7 @@ end
 include struct
   type data =
     | Axiom of {tp : NbE.Domain.t}
-    | Def of {tm: NbE.Domain.t; tp: NbE.Domain.t}
+    | Def of {tm: NbE.Domain.t Lazy.t; tp: NbE.Domain.t}
   type _ Effect.t += Resolve : Yuujinchou.Trie.path -> data Effect.t
 
   let resolve p = Effect.perform (Resolve p)

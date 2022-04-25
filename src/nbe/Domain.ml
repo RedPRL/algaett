@@ -23,7 +23,7 @@ type cut_head = Data.cut_head =
   | Lvl of int
   | Axiom of Yuujinchou.Trie.path (* not used for now *)
 type unfold_head = Data.unfold_head =
-  | Def of Yuujinchou.Trie.path * con
+  | Def of Yuujinchou.Trie.path * con Lazy.t
 type frame = Data.frame =
   | App of con
   | Fst
@@ -32,7 +32,7 @@ type frame = Data.frame =
 type t = con
 
 let lvl l = Cut (Lvl l, Emp)
-let def p v = Unfold (Def (p, v), Emp, Lazy.from_val v)
+let def p v = Unfold (Def (p, v), Emp, v)
 
 module ULvl =
   Mugenjou.Builder.Endo.Make

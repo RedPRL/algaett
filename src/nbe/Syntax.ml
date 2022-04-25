@@ -1,7 +1,7 @@
 type t = Data.syn =
   | Var of int
   | Axiom of Yuujinchou.Trie.path
-  | Def of Yuujinchou.Trie.path * Data.value
+  | Def of Yuujinchou.Trie.path * Data.value Lazy.t
   | Pi of t * (* binding *) t
   | Lam of (* binding *) t
   | App of t * t

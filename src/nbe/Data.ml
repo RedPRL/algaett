@@ -4,7 +4,7 @@ open Bwd
 type syn =
   | Var of int
   | Axiom of Yuujinchou.Trie.path
-  | Def of Yuujinchou.Trie.path * value
+  | Def of Yuujinchou.Trie.path * value Lazy.t
   | Pi of syn * (* binding *) syn
   | Lam of (* binding *) syn
   | App of syn * syn
@@ -35,9 +35,9 @@ and cut = cut_head * frame bwd
 and unfold = unfold_head * frame bwd * value Lazy.t (* invariant: lazy values must be effect-less *)
 and cut_head =
   | Lvl of int
-  | Axiom of Yuujinchou.Trie.path (* not used for now *)
+  | Axiom of Yuujinchou.Trie.path
 and unfold_head =
-  | Def of Yuujinchou.Trie.path * value
+  | Def of Yuujinchou.Trie.path * value Lazy.t
 and frame =
   | App of value
   | Fst
