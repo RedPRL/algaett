@@ -107,15 +107,15 @@ let rec infer tm =
 and check tm ~tp =
   match tm.CS.node, tp with
   | CS.Pi (base, name, fam), D.Univ _ ->
-    let base = check ~tp base
-    and fam = bind ~name ~tp @@ fun _ -> check ~tp fam
+    let base = check ~tp base in
+    let fam = bind ~name ~tp:(eval base) @@ fun _ -> check ~tp fam
     in
     S.pi base fam
   | CS.Lam (name, body), (D.Pi (base, fam) | D.VirPi (base, fam)) ->
     bind ~name ~tp:base @@ fun arg -> S.lam @@ check ~tp:(NbE.inst_clo' fam arg) body
   | CS.Sigma (base, name, fam), D.Univ _ ->
-    let base = check ~tp base
-    and fam = bind ~name ~tp @@ fun _ -> check ~tp fam
+    let base = check ~tp base in
+    let fam = bind ~name ~tp:(eval base) @@ fun _ -> check ~tp fam
     in
     S.sigma base fam
   | CS.Pair (tm1, tm2), D.Sigma (base, fam) ->
@@ -128,8 +128,8 @@ and check tm ~tp =
     let vsmall = eval small in
     if UL.(<) (UL.of_con vsmall) (UL.of_con large) then S.univ small else raise IllTyped
   | CS.VirPi (base, name, fam), D.Univ _ ->
-    let base = check ~tp:D.vir_univ base
-    and fam = bind ~name ~tp @@ fun _ -> check ~tp fam
+    let base = check ~tp:D.vir_univ base in
+    let fam = bind ~name ~tp:(eval base) @@ fun _ -> check ~tp fam
     in
     S.pi base fam
   | CS.TpULvl, D.VirUniv ->
