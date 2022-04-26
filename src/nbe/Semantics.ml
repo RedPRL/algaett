@@ -6,16 +6,15 @@ module D = Domain
 
 module Internal =
 struct
-  type locals = D.env
-  type env = { locals : locals }
+  type env = D.env
   module Eff = Algaeff.Reader.Make (struct type nonrec env = env end)
 
-  let make_clo body = D.Clo {body; env = (Eff.read()).locals}
+  let make_clo body = D.Clo {body; env = Eff.read()}
 
-  let of_idx idx = BwdLabels.nth (Eff.read()).locals idx
+  let of_idx idx = BwdLabels.nth (Eff.read()) idx
 
   let rec inst_clo (D.Clo {body; env}) arg : D.t =
-    let env = {locals = env #< arg} in
+    let env = env #< arg in
     Eff.run ~env @@ fun () -> eval body
 
   and inst_clo' clo arg = inst_clo clo @@ Lazy.from_val arg
@@ -72,14 +71,7 @@ struct
     | S.VirUniv -> D.VirUniv
 end
 
-type locals = Internal.locals
-type env = Internal.env = { locals : locals }
-
-let app = Internal.app
-let fst = Internal.fst
-let snd = Internal.snd
-
 let inst_clo = Internal.inst_clo
 let inst_clo' = Internal.inst_clo'
-let eval ~locals tm = Internal.Eff.run ~env:{locals} @@ fun () -> Internal.eval tm
-let eval_top tm = eval ~locals:Emp tm
+let eval ~env tm = Internal.Eff.run ~env @@ fun () -> Internal.eval tm
+let eval_top tm = eval ~env:Emp tm

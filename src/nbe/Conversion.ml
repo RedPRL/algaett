@@ -66,13 +66,13 @@ let rec equate v1 dir v2 =
     equate b1 (flip dir) b2;
     equate_clo f1 dir f2
   | D.Lam c1, _, D.Lam c2, _ ->
-    equate_clo c1 `EQ c2
+    equate_clo c1 `EQ c2 [@specialized always]
   | D.Sigma (b1, f1), dir, D.Sigma (b2, f2), _ ->
     equate b1 dir b2;
     equate_clo f1 dir f2
   | D.Pair (fst1, snd1), _, D.Pair (fst2, snd2), _ ->
-    equate fst1 `EQ fst2;
-    equate snd1 `EQ snd2
+    equate fst1 `EQ fst2 [@specialized always];
+    equate snd1 `EQ snd2 [@specialized always]
   | D.Univ l1, dir, D.Univ l2, _ ->
     equate_ulvl' l1 dir l2
   | D.VirPi (b1, f1), dir, D.VirPi (b2, f2), _ ->
@@ -132,7 +132,7 @@ and equate_spine_cold (hd1, sp1) v =
 
 and equate_frm f1 f2 =
   match f1, f2 with
-  | D.App v1, D.App v2 -> equate v1 `EQ v2
+  | D.App v1, D.App v2 -> equate v1 `EQ v2 [@specialized always]
   | D.Fst, D.Fst -> ()
   | D.Snd, D.Snd -> ()
   | _ -> raise Unequal
@@ -147,5 +147,7 @@ and equate_spine sp1 sp2 =
 
 and equate_clo c1 dir c2 =
   bind @@ fun arg -> equate (Semantics.inst_clo' c1 arg) dir (Semantics.inst_clo' c2 arg)
+
+let _equate_ v1 v2 = equate v1 `EQ v2 [@specialized always]
 
 let equate ~size v1 dir v2 = Eff.run ~env:{mode = `Rigid; size} @@ fun () -> equate v1 dir v2

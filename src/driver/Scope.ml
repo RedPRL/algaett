@@ -1,7 +1,7 @@
 open Algaeff.StdlibShim
 
 type empty = |
-module S = Yuujinchou.Scope.Make (struct type nonrec data = Decl.data type hook = empty end)
+module S = Yuujinchou.Scope.Make (struct type nonrec data = Checker.data type hook = empty end)
 
 exception NotInScope
 
@@ -13,7 +13,7 @@ let handle_resolve f () =
   try_with f ()
     { effc = fun (type a) (eff : a Effect.t) ->
           match eff with
-          | Decl.Resolve p -> Option.some @@
+          | Checker.Resolve p -> Option.some @@
             fun (k : (a, _) continuation) ->
             Algaeff.Fun.Deep.finally k (fun () ->
                 match S.resolve p with

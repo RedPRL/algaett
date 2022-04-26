@@ -1,4 +1,0 @@
-(library
- (name Unit)
- (libraries bwd algaeff mugenjou yuujinchou algaett.nbe algaett.decl)
- (public_name algaett.unit))

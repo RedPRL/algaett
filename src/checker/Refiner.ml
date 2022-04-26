@@ -26,10 +26,10 @@ module Eff = Algaeff.Reader.Make (struct type nonrec env = env end)
 open struct
   (* invariant: the return values must be effect-less *)
 
-  let eval tm = NbE.eval ~locals:(Eff.read()).locals tm
+  let eval tm = NbE.eval ~env:(Eff.read()).locals tm
   let lazy_eval tm =
-    let locals = (Eff.read()).locals in
-    lazy begin NbE.eval ~locals tm end
+    let env = (Eff.read()).locals in
+    lazy begin NbE.eval ~env tm end
   let quote v = NbE.quote ~size:(Eff.read()).size v
   let equate v = NbE.equate ~size:(Eff.read()).size v
   let resolve_local p = Yuujinchou.Trie.find_singleton p (Eff.read()).lookup

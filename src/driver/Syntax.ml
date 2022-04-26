@@ -1,4 +1,4 @@
-include Decl.Syntax
+include Checker.Syntax
 
 type cmd = cmd_ node
 and cmd_ =

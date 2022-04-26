@@ -2,4 +2,4 @@ module Syntax = Syntax
 
 exception NotInScope = Scope.NotInScope
 
-let execute = Driver.execute
+let execute = Execution.execute

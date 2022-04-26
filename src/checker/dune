@@ -1,4 +1,4 @@
 (library
- (name Decl)
+ (name Checker)
  (libraries bwd algaeff mugenjou yuujinchou algaett.nbe)
- (public_name algaett.decl))
+ (public_name algaett.checker))
