@@ -10,4 +10,4 @@ Many ideas stolen from [András Kovács’s smalltt.](https://github.com/AndrasK
 
 ## Documentation
 
-[Here is the API documentation.](https://redprl.org/algaett/algaett/Algaett)
+[Here is the API documentation.](https://redprl.org/algaett/algaett/)
