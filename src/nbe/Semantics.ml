@@ -25,7 +25,7 @@ struct
     | D.Cut (hd, frms) ->
       D.Cut (hd, frms #< (D.App v1))
     | D.Unfold (hd, frms, v0) ->
-      D.Unfold (hd, frms #< (D.App v1), lazy begin app (Lazy.force v0) v1 end)
+      D.Unfold (hd, frms #< (D.App v1), Lazy.map (fun v0 -> app v0 v1) v0)
     | _ -> invalid_arg "Evaluation.app"
 
   and fst : D.t -> D.t =
@@ -34,7 +34,7 @@ struct
     | D.Cut (hd, frms) ->
       D.Cut (hd, frms #< D.Fst)
     | D.Unfold (hd, frms, v0) ->
-      D.Unfold (hd, frms #< D.Fst, lazy begin fst (Lazy.force v0) end)
+      D.Unfold (hd, frms #< D.Fst, Lazy.map fst v0)
     | _ -> invalid_arg "Evaluation.fst"
 
   and snd : D.t -> D.t =
@@ -43,7 +43,7 @@ struct
     | D.Cut (hd, frms) ->
       D.Cut (hd, frms #< D.Snd)
     | D.Unfold (hd, frms, v0) ->
-      D.Unfold (hd, frms #< D.Snd, lazy begin snd (Lazy.force v0) end)
+      D.Unfold (hd, frms #< D.Snd, Lazy.map snd v0)
     | _ -> invalid_arg "Evaluation.snd"
 
   and eval_ulvl =
