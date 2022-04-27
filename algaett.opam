@@ -10,7 +10,7 @@ bug-reports: "https://github.com/RedPRL/algaett/issues"
 dev-repo: "git+https://github.com/RedPRL/algaett.git"
 depends: [
   "dune" {>= "2.0"}
-  "base-domains"
+  "ocaml" {>= "5.0"}
   "bwd" {>= "1.1"}
   "odoc" {with-doc}
   "algaeff"
