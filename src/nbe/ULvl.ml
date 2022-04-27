@@ -1,15 +1,11 @@
-include Mugenjou.Builder.Free.Make
-    (struct
-      module Shift = Mugenjou.Shift.Gapped
-      type var = int
-    end)
+module P = struct
+  module Shift = Mugenjou.Shift.Gapped
+  type var = int
+  let equal_var = Int.equal
+end
 
-include Mugenjou.Theory.Make
-    (struct
-      module Shift = Mugenjou.Shift.Gapped
-      type var = int
-      let equal_var = Int.equal
-    end)
+include Mugenjou.Builder.Free.Make (P)
+include Mugenjou.Theory.Make (P)
 
 let rec of_con =
   function
