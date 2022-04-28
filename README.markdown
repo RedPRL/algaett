@@ -4,7 +4,7 @@ A demonstration of how the following modules fit together:
 - [algaeff](https://redprl.org/algaeff/algaeff/Algaeff): reusable effect-based components
 - [bantorra](https://redprl.org/bantorra/bantorra/Bantorra): unit resolution
 - [yuujinchou](https://redprl.org/yuujinchou/yuujinchou/Yuujinchou): namespaces
-- [mugenjou](https://redprl.org/mugenjou/mugenjou/Mugenjou): universe levels
+- [mugen](https://redprl.org/mugen/mugen/Mugen): universe levels
 
 Many ideas stolen from [András Kovács’s smalltt.](https://github.com/AndrasKovacs/smalltt)
 

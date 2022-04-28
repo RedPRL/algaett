@@ -1,4 +1,4 @@
 (library
  (name Driver)
- (libraries bwd algaeff mugenjou yuujinchou algaett.nbe algaett.checker)
+ (libraries bwd algaeff mugen yuujinchou algaett.nbe algaett.checker)
  (public_name algaett.driver))

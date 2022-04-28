@@ -33,7 +33,7 @@ struct
     | D.VirUniv -> S.vir_univ
 
   and quote_ulvl =
-    let module M = Mugenjou.Syntax in
+    let module M = Mugen.Syntax in
     function
     | M.Top -> M.Top
     | M.Shifted (ulvl, s) -> M.Shifted (quote_con ulvl, s)

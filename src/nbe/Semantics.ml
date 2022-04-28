@@ -47,7 +47,7 @@ struct
     | _ -> invalid_arg "Evaluation.snd"
 
   and eval_ulvl =
-    let module M = Mugenjou.Syntax in
+    let module M = Mugen.Syntax in
     function
     | M.Top -> D.ULvl.top
     | M.Shifted (ulvl, s) -> D.ULvl.shifted (eval ulvl) s

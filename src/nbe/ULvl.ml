@@ -1,11 +1,11 @@
 module P = struct
-  module Shift = Mugenjou.Shift.Gapped
+  module Shift = Mugen.Shift.Gapped
   type var = int
   let equal_var = Int.equal
 end
 
-include Mugenjou.Builder.Free.Make (P)
-include Mugenjou.Theory.Make (P)
+include Mugen.Builder.Free.Make (P)
+include Mugen.Theory.Make (P)
 
 let rec of_con =
   function
@@ -15,7 +15,7 @@ let rec of_con =
   | _ -> invalid_arg "of_con"
 
 and of_endo =
-  let module M = Mugenjou.Syntax in
+  let module M = Mugen.Syntax in
   function
   | M.Shifted (l, s) -> shifted (of_con l) s
   | M.Top -> top

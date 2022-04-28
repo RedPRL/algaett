@@ -15,7 +15,7 @@ type con = Data.value =
   | Univ of con
   | VirPi of con * closure
   | TpULvl
-  | ULvl of (Mugenjou.Shift.gapped, con) Mugenjou.Syntax.endo
+  | ULvl of (Mugen.Shift.gapped, con) Mugen.Syntax.endo
   | VirUniv
 type cut = Data.cut
 type unfold = Data.unfold
@@ -35,9 +35,9 @@ let lvl l = Cut (Lvl l, Emp)
 let def p v = Unfold (Def (p, v), Emp, v)
 
 module ULvl =
-  Mugenjou.Builder.Endo.Make
+  Mugen.Builder.Endo.Make
     (struct
-      module Shift = Mugenjou.Shift.Gapped
+      module Shift = Mugen.Shift.Gapped
       type level = t
       let level l = ULvl l
       let unlevel = function ULvl l -> Some l | _ -> None

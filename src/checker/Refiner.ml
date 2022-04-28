@@ -100,7 +100,7 @@ let rec infer tm =
   | CS.ULvlTop -> S.ULvl.top, D.TpULvl
   | CS.ULvlShifted (l, s) ->
     let l = check ~tp:D.TpULvl l in
-    let s = Mugenjou.Shift.Gapped.of_prefix s in
+    let s = Mugen.Shift.Gapped.of_prefix s in
     S.ULvl.shifted l s, D.TpULvl
   | _ -> raise IllTyped
 
