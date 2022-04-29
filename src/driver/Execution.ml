@@ -2,6 +2,10 @@ module CS = Syntax
 
 exception Quit
 
+type _ Effect.t +=
+  | PreImport : Bantorra.Manager.unitpath -> unit Effect.t
+  | Import : Bantorra.Manager.unitpath -> Checker.resolve_data Yuujinchou.Trie.t Effect.t
+
 let include_singleton name data =
   match name with
   | None -> ()
@@ -16,6 +20,8 @@ let rec execute_decl decl =
     let tp = NbE.eval_top @@ Checker.check_top tp ~tp:NbE.Domain.univ_top in
     let tm = Checker.check_top tm ~tp in (* we want to type check the term now *)
     include_singleton name @@ Def {tm = lazy begin NbE.eval_top tm end; tp}
+  | CS.Import {unit_path; modifier} ->
+    Scope.import unit_path modifier
   | CS.Section {prefix; block} ->
     Scope.section prefix @@ fun () -> execute_section block
   | CS.Quit -> raise Quit

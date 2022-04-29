@@ -14,11 +14,13 @@ depends: [
   "bwd" {>= "1.1"}
   "odoc" {with-doc}
   "algaeff"
+  "bantorra"
   "mugen"
   "yuujinchou"
 ]
 pin-depends: [
   [ "algaeff.~dev" "git+https://github.com/RedPRL/algaeff" ]
+  [ "bantorra.0.2.0" "git+https://github.com/RedPRL/bantorra" ]
   [ "mugen.~dev" "git+https://github.com/RedPRL/mugen" ]
   [ "yuujinchou.3.0.0" "git+https://github.com/RedPRL/yuujinchou" ]
 ]
