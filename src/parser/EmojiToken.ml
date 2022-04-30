@@ -57,45 +57,45 @@ end
 
 (* to_rev_seq is used so that skin tones will definitely be consumed *)
 let of_set s = Earley.(no_blank_layout @@ alternatives @@ List.map (fun s -> greedy (string s s)) @@ List.of_seq @@ StringSet.to_rev_seq s)
-let parser emoji_sep = (of_set EmojiSet.sep) -> ()
-let emoji_alnum = of_set EmojiSet.alnum
-let emoji_alpha = of_set EmojiSet.alpha
-let parser emoji_seg_ = x:emoji_alpha - xs:emoji_alnum* -> String.concat "" (x :: xs)
-let emoji_seg = Earley.no_blank_layout emoji_seg_
+let parser sep = (of_set EmojiSet.sep) -> ()
+let alnum = of_set EmojiSet.alnum
+let alpha = of_set EmojiSet.alpha
+let parser raw_seg_ = x:alpha - xs:alnum* -> String.concat "" (x :: xs)
+let raw_seg = Earley.(no_blank_layout @@ greedy @@ raw_seg_)
 
 let keywords =
   let open KeywordClass in
   let module S = Checker.Syntax in
   Hashtbl.of_seq @@ List.to_seq [
-    [Emoji.(keycap_ ^ keycap_1)], TermField (fun tm -> S.Fst tm);
-    [Emoji.(keycap_ ^ keycap_2)], TermField (fun tm -> S.Snd tm);
-    [Emoji.milky_way], TermFun1 (fun tm -> S.Univ tm);
-    [Emoji.ladder], TermVirtualType S.TpULvl;
-    [Emoji.level_slider], TermVirtualType S.TpULvl;
+    Emoji.(keycap_ ^ keycap_1), TermField (fun tm -> S.Fst tm);
+    Emoji.(keycap_ ^ keycap_2), TermField (fun tm -> S.Snd tm);
+    Emoji.milky_way, TermFun1 (fun tm -> S.Univ tm);
+    Emoji.ladder, TermVirtualType S.TpULvl;
+    Emoji.level_slider, TermVirtualType S.TpULvl;
 
-    [Emoji.pushpin], CmdDef;
-    [Emoji.round_pushpin], CmdDef;
-    [Emoji.folded_hands], CmdAxiom;
-    [Emoji.folded_hands_light_skin_tone], CmdAxiom;
-    [Emoji.folded_hands_medium_light_skin_tone], CmdAxiom;
-    [Emoji.folded_hands_medium_skin_tone], CmdAxiom;
-    [Emoji.folded_hands_medium_dark_skin_tone], CmdAxiom;
-    [Emoji.folded_hands_dark_skin_tone], CmdAxiom;
-    [Emoji.stop_sign], CmdQuit;
-    [Emoji.inbox_tray], CmdImport;
-    [Emoji.umbrella], CmdSectionStart {tag = [Emoji.umbrella]};
-    [Emoji.closed_umbrella], CmdSectionEnd {check_tag = fun t -> t = [Emoji.umbrella]};
+    Emoji.pushpin, CmdDef;
+    Emoji.round_pushpin, CmdDef;
+    Emoji.folded_hands, CmdAxiom;
+    Emoji.folded_hands_light_skin_tone, CmdAxiom;
+    Emoji.folded_hands_medium_light_skin_tone, CmdAxiom;
+    Emoji.folded_hands_medium_skin_tone, CmdAxiom;
+    Emoji.folded_hands_medium_dark_skin_tone, CmdAxiom;
+    Emoji.folded_hands_dark_skin_tone, CmdAxiom;
+    Emoji.stop_sign, CmdQuit;
+    Emoji.inbox_tray, CmdImport;
+    Emoji.umbrella, CmdSectionStart {tag = [Emoji.umbrella]};
+    Emoji.closed_umbrella, CmdSectionEnd {check_tag = fun t -> t = [Emoji.umbrella]};
   ]
 
-let raw = Earley.(no_blank_layout @@ list1 (greedy emoji_seg) emoji_sep)
-let keyword = raw |> Earley.apply @@ fun token ->
+let keyword = raw_seg |> Earley.apply @@ fun token ->
   match Hashtbl.find_opt keywords token with
   | Some k -> k
   | None -> Earley.give_up ()
-let name = raw |> Earley.apply @@ fun token ->
+let seg = raw_seg |> Earley.apply @@ fun token ->
   match Hashtbl.find_opt keywords token with
   | None -> token
   | Some _ -> Earley.give_up ()
+let name = Earley.list1 seg sep
 
 let parser digit =
   | STR(Emoji.keycap_0) -> "0"
