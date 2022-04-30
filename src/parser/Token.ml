@@ -1,6 +1,7 @@
 [@@@warning "-39"] (* the preprocessor sometimes generates useless 'rec' *)
 
 open Earley_core
+open EmojiShim
 
 open KeywordClass
 
@@ -21,12 +22,12 @@ let import = keyword |> Earley.apply @@ function CmdImport -> () | _ -> Earley.g
 let section_start = keyword |> Earley.apply @@ function CmdSectionStart {tag} -> {tag} | _ -> Earley.give_up ()
 let section_end = keyword |> Earley.apply @@ function CmdSectionEnd {check_tag} -> {check_tag} | _ -> Earley.give_up ()
 
-let parser at = "@" -> ()
+let parser at = {"@" | STR(Emoji.direct_hit) } -> ()
 let parser colon = ":" -> ()
 let parser comma = "," -> ()
 let parser right_arrow = {"➡" | "→" | "->"} -> ()
 let parser maps_to = {"↪" | "=>"} -> ()
-let parser times = {"✖" | STR(EmojiToken.keycap_asterisk) | "×" | "*"} -> ()
+let parser times = {STR(Emoji.heavy_multiplication_x) | STR(Emoji.keycap_asterisk) | "×" | "*"} -> ()
 
 let parser assign =
   { ":="

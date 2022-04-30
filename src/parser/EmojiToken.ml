@@ -1,15 +1,13 @@
 [@@@warning "-39"] (* the preprocessor sometimes generates useless 'rec' *)
 
 open Earley_core
+open EmojiShim
 
 module StringSet = Set.Make (String)
 
-let keycap_asterisk = "\x2a\xef\xb8\x8f\xe2\x83\xa3"
-let ladder = "\xf0\x9f\xaa\x9c"
-
 module EmojiSet =
 struct
-  let all = StringSet.of_list (keycap_asterisk :: ladder :: Emoji.all_emojis)
+  let all = StringSet.of_list Emoji.all_emojis
 
   (* XXX dependency: the correctness of the keyword table in Token highly depends on
      what symbols have been excluded from raw names. *)
@@ -23,6 +21,7 @@ struct
       small_blue_diamond;
     ]
   let other_symbol = StringSet.of_list Emoji.[
+      direct_hit;
       keycap_asterisk; (* Keycap Asterisk *)
       right_arrow;
       left_arrow_curving_right;
@@ -72,7 +71,7 @@ let keywords =
     [Emoji.(keycap_ ^ keycap_1)], TermField (fun tm -> S.Fst tm);
     [Emoji.(keycap_ ^ keycap_2)], TermField (fun tm -> S.Snd tm);
     [Emoji.milky_way], TermFun1 (fun tm -> S.Univ tm);
-    [ladder], TermVirtualType S.TpULvl;
+    [Emoji.ladder], TermVirtualType S.TpULvl;
     [Emoji.level_slider], TermVirtualType S.TpULvl;
 
     [Emoji.pushpin], CmdDef;
