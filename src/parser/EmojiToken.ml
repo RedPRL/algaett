@@ -34,6 +34,7 @@ struct
       backhand_index_pointing_right_dark_skin_tone;
       heavy_multiplication_x;
       heavy_plus_sign;
+      heavy_minus_sign;
     ]
 
   let symbol = List.fold_left StringSet.union StringSet.empty [question_mark; sep; other_symbol]
@@ -97,3 +98,26 @@ let name = raw |> Earley.apply @@ fun token ->
   match Hashtbl.find_opt keywords token with
   | None -> token
   | Some _ -> Earley.give_up ()
+
+let parser digit =
+  | STR(Emoji.keycap_0) -> "0"
+  | STR(Emoji.keycap_1) -> "1"
+  | STR(Emoji.keycap_2) -> "2"
+  | STR(Emoji.keycap_3) -> "3"
+  | STR(Emoji.keycap_4) -> "4"
+  | STR(Emoji.keycap_5) -> "5"
+  | STR(Emoji.keycap_6) -> "6"
+  | STR(Emoji.keycap_7) -> "7"
+  | STR(Emoji.keycap_8) -> "8"
+  | STR(Emoji.keycap_9) -> "9"
+  | STR(Emoji.keycap_10) -> "10"
+  | STR(Emoji.hundred_points) -> "100"
+let parser pos_num =
+  | ds:digit+ ->
+       match int_of_string_opt (String.concat "" ds) with
+       | Some i -> i
+       | None -> Earley.give_up ()
+let parser num_ =
+  | STR(Emoji.heavy_plus_sign)? i:pos_num -> i
+  | STR(Emoji.heavy_minus_sign) i:pos_num -> -i
+let num = Earley.no_blank_layout num_

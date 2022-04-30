@@ -6,6 +6,7 @@ open KeywordClass
 
 let keyword = Earley.alternatives [AsciiToken.keyword; EmojiToken.keyword]
 let name = Earley.alternatives [AsciiToken.name; EmojiToken.name]
+let num = Earley.alternatives [AsciiToken.num; EmojiToken.num]
 
 type tag = {tag : string list}
 type check_tag = {check_tag : string list -> bool}

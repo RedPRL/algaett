@@ -35,3 +35,10 @@ let name = raw |> Earley.apply @@ fun token ->
   match Hashtbl.find_opt keywords token with
   | None -> token
   | Some _ -> Earley.give_up ()
+
+let parser pos_num =
+  | i:''[0-9]+'' -> match int_of_string_opt i with Some i -> i | _ -> Earley.give_up ()
+let parser num_ =
+  | "+"? i:pos_num -> i
+  | "-" i:pos_num -> -i
+let num = Earley.no_blank_layout num_

@@ -22,3 +22,6 @@ val comma : unit Earley_core.Earley.grammar
 val right_arrow : unit Earley_core.Earley.grammar
 val maps_to : unit Earley_core.Earley.grammar
 val times : unit Earley_core.Earley.grammar
+
+(* numbers *)
+val num : int Earley_core.Earley.grammar
