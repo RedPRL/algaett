@@ -3,6 +3,7 @@
 open Locate
 open Token
 
+module E = Earley_core.Earley
 module S = Checker.Syntax
 
 let virtual_tp = located term_vir_tp
@@ -17,7 +18,7 @@ let parser atomic_term_ =
 and atomic_term = located atomic_term_
 and parser shift =
   | s:num -> [s]
-  | "{" ss:(Earley_core.Earley.list0 num comma) "}" -> ss
+  | "{" (E.list0 num comma) "}"
 and parser app_term_ =
   | atomic_term_
   | f:term_fun1 arg:atomic_term ->
