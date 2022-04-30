@@ -9,8 +9,6 @@ module EmojiSet =
 struct
   let all = StringSet.of_list Emoji.all_emojis
 
-  (* XXX dependency: the correctness of the keyword table in Token highly depends on
-     what symbols have been excluded from raw names. *)
   let question_mark = StringSet.of_list Emoji.[
       exclamation_question_mark;
       question_mark;
