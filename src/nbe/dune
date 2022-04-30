@@ -1,7 +1,4 @@
 (library
  (name NbE)
- (ocamlopt_flags -inlining-report -O3)
  (libraries bwd algaeff mugen yuujinchou)
  (public_name algaett.nbe))
-
-(env (inlining-report (ocamlopt_flags :standard -O3 -inlining-report)))
