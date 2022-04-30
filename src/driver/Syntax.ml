@@ -2,8 +2,8 @@ include Checker.Syntax
 
 type cmd = cmd_ node
 and cmd_ =
-  | Axiom of {name : ident; tp : t}
-  | Def of {name : ident; tm : t; tp : t}
+  | Axiom of {name : bound_name; tp : t}
+  | Def of {name : bound_name; tm : t; tp : t}
   | Import of {unit_path : Bantorra.Manager.unitpath; modifier : Scope.modifier}
   | Section of {prefix : Yuujinchou.Trie.path; block : section}
   | Quit
