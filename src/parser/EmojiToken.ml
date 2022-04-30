@@ -21,6 +21,7 @@ struct
   let other_symbol = StringSet.of_list Emoji.[
       direct_hit;
       keycap_asterisk; (* Keycap Asterisk *)
+      up_arrow;
       right_arrow;
       left_arrow_curving_right;
       backhand_index_pointing_right;
