@@ -10,15 +10,17 @@ module UL = NbE.ULvl
 type cell = {tm : D.t; tp : D.t}
 
 type env = {
-  lookup : cell Yuujinchou.Trie.t;
+  blessed_ulvl : D.t;
+  local_names : cell Yuujinchou.Trie.t;
   locals : D.t Lazy.t bwd;
   size : int;
 }
 
-let empty_env = {
-  lookup = Yuujinchou.Trie.empty;
-  locals = Emp;
-  size = 0;
+let top_env = {
+  blessed_ulvl = D.lvl 0;
+  local_names = Yuujinchou.Trie.empty;
+  locals = Emp #< (Lazy.from_val @@ D.lvl 0);
+  size = 1;
 }
 
 module Eff = Algaeff.Reader.Make (struct type nonrec env = env end)
@@ -32,17 +34,19 @@ open struct
     lazy begin NbE.eval ~env tm end
   let quote v = NbE.quote ~size:(Eff.read()).size v
   let equate v = NbE.equate ~size:(Eff.read()).size v
-  let resolve_local p = Yuujinchou.Trie.find_singleton p (Eff.read()).lookup
+  let resolve_local p = Yuujinchou.Trie.find_singleton p (Eff.read()).local_names
   let bind ~name ~tp f =
     let arg = D.lvl (Eff.read()).size in
     Eff.scope (fun env ->
-        {size = env.size + 1;
+        {blessed_ulvl = env.blessed_ulvl;
+         size = env.size + 1;
          locals = env.locals #< (Lazy.from_val arg);
-         lookup =
+         local_names =
            match name with
-           | None -> env.lookup
-           | Some name -> Yuujinchou.Trie.update_singleton name (fun _ -> Some {tm = arg; tp}) env.lookup})
+           | None -> env.local_names
+           | Some name -> Yuujinchou.Trie.update_singleton name (fun _ -> Some {tm = arg; tp}) env.local_names})
     @@ fun () -> f arg
+  let blessed_ulvl () = (Eff.read()).blessed_ulvl
 end
 
 include struct
@@ -56,20 +60,38 @@ end
 
 exception IllTyped of {tm: Syntax.t; tp: D.t option}
 
+let shifted_blessed_ulvl =
+  function
+  | None -> blessed_ulvl ()
+  | Some s -> D.ULvl.shifted (blessed_ulvl ()) (Mugen.Shift.Gapped.of_prefix s)
+
+let app_ulvl tp ulvl =
+  match NbE.force_all tp with
+  | D.VirPi (D.TpULvl, fam) ->
+    NbE.inst_clo' fam ulvl
+  | _ -> invalid_arg "app_ulvl"
+
+let infer_var p s =
+  match resolve_local p, s with
+  | Some {tm; tp}, None -> quote tm, tp
+  | Some _, Some _ ->
+    Format.eprintf "@[Local variable@;<1 2>@[%a@]@ could not have level shifting@]@." Syntax.dump_name p;
+    raise @@ IllTyped {tm = {node = CS.Var (p, s); info = None}; tp = None}
+  | None, _ ->
+    let ulvl = shifted_blessed_ulvl s in
+    let tm, tp =
+      match resolve p with
+      | Axiom {tp} -> S.axiom p, tp
+      | Def {tp; tm} -> S.def p tm, tp
+    in
+    S.app tm (quote ulvl), app_ulvl tp ulvl
+
 let rec infer tm =
   match tm.CS.node with
   | CS.Ann {tm; tp} ->
     let tp = eval @@ check ~tp:D.univ_top tp in
     check ~tp tm, tp
-  | CS.Var p ->
-    begin
-      match resolve_local p with
-      | Some {tm; tp} -> quote tm, tp
-      | None ->
-        match resolve p with
-        | Axiom {tp} -> S.axiom p, tp
-        | Def {tp; tm} -> S.def p tm, tp
-    end
+  | CS.Var (p, s) -> infer_var p s
   | CS.App (tm1, tm2) ->
     begin
       let tm1, tp1 = infer tm1 in
@@ -97,11 +119,6 @@ let rec infer tm =
         S.snd tm, tp
       | _ -> invalid_arg "infer"
     end
-  | CS.ULvlTop -> S.ULvl.top, D.TpULvl
-  | CS.ULvlShifted (l, s) ->
-    let l = check ~tp:D.TpULvl l in
-    let s = Mugen.Shift.Gapped.of_prefix s in
-    S.ULvl.shifted l s, D.TpULvl
   | _ ->
     Format.eprintf "@[<2>Could not infer the type of@ %a@]@." Syntax.dump tm;
     raise @@ IllTyped {tm; tp = None}
@@ -125,23 +142,35 @@ and check tm ~tp =
     let tp2 = NbE.inst_clo fam @@ lazy_eval tm1 in
     let tm2 = check ~tp:tp2 tm2 in
     S.pair tm1 tm2
-  | CS.Univ small, D.Univ large ->
-    let small = check ~tp:D.TpULvl small in
-    let vsmall = eval small in
+  | CS.Univ s, D.Univ large ->
+    let vsmall = shifted_blessed_ulvl s in
     if UL.(<) (UL.of_con vsmall) (UL.of_con large)
-    then S.univ small
-    else raise @@ IllTyped {tm; tp = Some tp}
+    then S.univ (quote vsmall)
+    else begin
+      Format.eprintf "@[<2>Universe level @[%a@] is not smaller than or equal to @[%a@]@]@."
+        (Mugen.Syntax.Free.dump Mugen.Shift.Gapped.dump Format.pp_print_int) (UL.of_con vsmall)
+        (Mugen.Syntax.Free.dump Mugen.Shift.Gapped.dump Format.pp_print_int) (UL.of_con large);
+      raise @@ IllTyped {tm; tp = Some tp}
+    end
   | CS.VirPi (base, name, fam), D.Univ _ ->
     let base = check ~tp:D.vir_univ base in
     let fam = bind ~name ~tp:(eval base) @@ fun _ -> check ~tp fam
     in
     S.pi base fam
-  | CS.TpULvl, D.VirUniv ->
-    S.TpULvl
   | _ ->
     let tm', tp' = infer tm in
     try equate tp' `LE tp; tm' with
     | NbE.Unequal -> raise @@ IllTyped {tm; tp = Some tp}
 
-let infer_top tm = Eff.run ~env:empty_env @@ fun () -> infer tm
-let check_top tm ~tp = Eff.run ~env:empty_env @@ fun () -> check tm ~tp
+let infer_top tm =
+  let tm, tp =
+    Eff.run ~env:top_env @@ fun () ->
+    let tm, tp = infer tm in tm, quote tp
+  in
+  S.lam tm, NbE.eval_top (S.vir_pi S.tp_ulvl tp)
+let check_tp_top tp =
+  let tp = Eff.run ~env:top_env @@ fun () -> check tp ~tp:D.univ_top in
+  S.vir_pi S.tp_ulvl tp
+let check_top tm ~tp =
+  let tm = Eff.run ~env:top_env @@ fun () -> check tm ~tp:(app_ulvl tp @@ blessed_ulvl()) in
+  S.lam tm

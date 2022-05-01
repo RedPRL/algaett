@@ -28,7 +28,7 @@ let dump_bound_name fmt =
 type t = t_ node
 and t_ =
   | Ann of {tm : t; tp : t}
-  | Var of name
+  | Var of name * int list option
   | Pi of t * bound_name * t
   | Lam of bound_name * t
   | App of t * t
@@ -36,11 +36,8 @@ and t_ =
   | Pair of t * t
   | Fst of t
   | Snd of t
-  | Univ of t
+  | Univ of int list option
   | VirPi of t * bound_name * t
-  | TpULvl
-  | ULvlTop
-  | ULvlShifted of t * int list
 
 (** ugly printer for the arguments of ULvlShifted *)
 let dump_shift fmt l =
@@ -53,8 +50,10 @@ and dump_ fmt =
   function
   | Ann {tm; tp} ->
     Format.fprintf fmt "@[<6>Ann { tm = @[%a@];@ stop = @[%a@]; }@]" dump tm dump tp
-  | Var name ->
+  | Var (name, None) ->
     Format.fprintf fmt "Var @[%a@]" dump_name name
+  | Var (name, Some s) ->
+    Format.fprintf fmt "@[<6>Var ( @[%a@],@ @[%a@] )" dump_name name dump_shift s
   | Pi (base, bound, fam) ->
     Format.fprintf fmt "@[<5>Pi ( @[%a@],@ @[%a@],@ @[%a@] )@]" dump base dump_bound_name bound dump fam
   | Lam (bound, tm) ->
@@ -69,13 +68,9 @@ and dump_ fmt =
     Format.fprintf fmt "Fst @[%a@]" dump tm
   | Snd tm ->
     Format.fprintf fmt "Snd @[%a@]" dump tm
-  | Univ tm ->
-    Format.fprintf fmt "Univ @[%a@]" dump tm
+  | Univ None ->
+    Format.pp_print_string fmt "Univ"
+  | Univ (Some s) ->
+    Format.fprintf fmt "Univ @[%a@]" dump_shift s
   | VirPi (base, bound, fam) ->
     Format.fprintf fmt "@[<8>VirPi ( @[%a@],@ @[%a@],@ @[%a@] )@]" dump base dump_bound_name bound dump fam
-  | TpULvl ->
-    Format.pp_print_string fmt "TpULvl"
-  | ULvlTop ->
-    Format.pp_print_string fmt "TpULvlTop"
-  | ULvlShifted (tm, s) ->
-    Format.fprintf fmt "@[<14>ULvlShifted ( @[%a@],@ @[%a@] )@]" dump tm dump_shift s

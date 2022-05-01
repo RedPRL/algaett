@@ -15,8 +15,7 @@ let keywords =
     (* term *)
     "fst", TermField (fun tm -> S.Fst tm);
     "snd", TermField (fun tm -> S.Snd tm);
-    "univ", TermFun1 (fun tm -> S.Univ tm);
-    "lvl", TermVirtualType S.TpULvl;
+    "univ", TermConstant (fun ~shift -> S.Univ shift);
 
     (* cmd *)
     "def", CmdDef;

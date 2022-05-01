@@ -68,9 +68,7 @@ let keywords =
   Hashtbl.of_seq @@ List.to_seq [
     Emoji.(keycap_number_sign ^ keycap_1), TermField (fun tm -> S.Fst tm);
     Emoji.(keycap_number_sign ^ keycap_2), TermField (fun tm -> S.Snd tm);
-    Emoji.milky_way, TermFun1 (fun tm -> S.Univ tm);
-    Emoji.ladder, TermVirtualType S.TpULvl;
-    Emoji.level_slider, TermVirtualType S.TpULvl;
+    Emoji.milky_way, TermConstant (fun ~shift -> S.Univ shift);
 
     Emoji.pushpin, CmdDef;
     Emoji.round_pushpin, CmdDef;

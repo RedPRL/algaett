@@ -14,21 +14,20 @@ let parser bound_name =
 
 let parser atomic_term_ =
   | "{" term_ "}"
-  | x:name -> S.Var x
+  | x:name -> S.Var (x, None)
+  | x:name up s:shift -> S.Var (x, Some s)
+  | c:term_constant -> c ~shift:None
+  | c:term_constant up s:shift -> c ~shift:(Some s)
 and atomic_term = located atomic_term_
 and parser shift =
   | s:num -> [s]
   | "{" (E.list0 num comma) "}"
 and parser app_term_ =
   | atomic_term_
-  | f:term_fun1 arg:atomic_term ->
-      f arg
   | f:app_term arg:atomic_term ->
       S.App (f, arg)
   | tm:atomic_term at proj:term_field ->
       proj tm
-  | tm:app_term up s:shift ->
-      S.ULvlShifted (tm, s)
 and app_term = located app_term_
 and parser term_ =
   | app_term_

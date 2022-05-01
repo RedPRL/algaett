@@ -14,10 +14,10 @@ let include_singleton name data =
 let rec execute_decl decl =
   match decl.CS.node with
   | CS.Axiom {name; tp} ->
-    let tp = NbE.eval_top @@ Checker.check_top tp ~tp:NbE.Domain.univ_top in
+    let tp = NbE.eval_top @@ Checker.check_tp_top tp in
     include_singleton name @@ Axiom {tp}
   | CS.Def {name; tm; tp} ->
-    let tp = NbE.eval_top @@ Checker.check_top tp ~tp:NbE.Domain.univ_top in
+    let tp = NbE.eval_top @@ Checker.check_tp_top tp in
     let tm = Checker.check_top tm ~tp in (* we want to type check the term now *)
     include_singleton name @@ Def {tm = lazy begin NbE.eval_top tm end; tp}
   | CS.Import {unit_path; modifier} ->

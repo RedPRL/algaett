@@ -5,7 +5,7 @@ type check_tag = {check_tag : string list -> bool}
 val name : string list Earley_core.Earley.grammar
 val underscore : unit Earley_core.Earley.grammar
 val term_field : (Checker.Syntax.t -> Checker.Syntax.t_) Earley_core.Earley.grammar
-val term_fun1 : (Checker.Syntax.t -> Checker.Syntax.t_) Earley_core.Earley.grammar
+val term_constant : (shift:int list option -> Checker.Syntax.t_) Earley_core.Earley.grammar
 val term_vir_tp : Checker.Syntax.t_ Earley_core.Earley.grammar
 val def : unit Earley_core.Earley.grammar
 val assign : unit Earley_core.Earley.grammar
