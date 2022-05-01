@@ -74,7 +74,7 @@ let rec infer tm =
     begin
       let tm1, tp1 = infer tm1 in
       match NbE.force_all tp1 with
-      | D.Pi (base, fam) ->
+      | D.Pi (base, fam) | D.VirPi (base, fam) ->
         let tm2 = check ~tp:base tm2 in
         let tp = NbE.inst_clo fam @@ lazy_eval tm2 in
         S.app tm1 tm2, tp
