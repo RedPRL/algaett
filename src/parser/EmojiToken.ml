@@ -32,6 +32,7 @@ struct
       multiply;
       plus;
       minus;
+      heavy_equals_sign;
     ]
 
   let symbol = List.fold_left StringSet.union StringSet.empty [question_mark; sep; other_symbol]

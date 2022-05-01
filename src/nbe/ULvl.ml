@@ -1,5 +1,5 @@
 module P = struct
-  module Shift = Mugen.Shift.Gapped
+  module Shift = Mugen.Shift.Linear
   type var = int
   let equal_var = Int.equal
 end

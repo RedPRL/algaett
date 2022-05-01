@@ -5,7 +5,7 @@ type check_tag = {check_tag : string list -> bool}
 val name : string list Earley_core.Earley.grammar
 val underscore : unit Earley_core.Earley.grammar
 val term_field : (Checker.Syntax.t -> Checker.Syntax.t_) Earley_core.Earley.grammar
-val term_constant : (shift:int list option -> Checker.Syntax.t_) Earley_core.Earley.grammar
+val term_constant : (shift:Checker.Syntax.shift list option -> Checker.Syntax.t_) Earley_core.Earley.grammar
 val term_vir_tp : Checker.Syntax.t_ Earley_core.Earley.grammar
 val def : unit Earley_core.Earley.grammar
 val assign : unit Earley_core.Earley.grammar
@@ -17,8 +17,12 @@ val section_end : check_tag Earley_core.Earley.grammar
 
 (* symbols *)
 val semisemi : unit Earley_core.Earley.grammar
+val semi : unit Earley_core.Earley.grammar
 val up : unit Earley_core.Earley.grammar
 val at : unit Earley_core.Earley.grammar
+val plus : unit Earley_core.Earley.grammar
+val multiply : unit Earley_core.Earley.grammar
+val equal : unit Earley_core.Earley.grammar
 val colon : unit Earley_core.Earley.grammar
 val comma : unit Earley_core.Earley.grammar
 val right_arrow : unit Earley_core.Earley.grammar

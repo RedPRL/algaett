@@ -60,10 +60,17 @@ end
 
 exception IllTyped of {tm: Syntax.t; tp: D.t option}
 
+let elab_shift =
+  let open Mugen.Shift.Linear in
+  function
+  | CS.Translate i -> trans i
+  | CS.Scale i -> scale i
+
 let shifted_blessed_ulvl =
   function
   | None -> blessed_ulvl ()
-  | Some s -> D.ULvl.shifted (blessed_ulvl ()) (Mugen.Shift.Gapped.of_prefix s)
+  | Some ss ->
+    List.fold_right (fun s l -> D.ULvl.shifted l (elab_shift s)) ss (blessed_ulvl ())
 
 let app_ulvl tp ulvl =
   match NbE.force_all tp with
@@ -75,7 +82,7 @@ let infer_var p s =
   match resolve_local p, s with
   | Some {tm; tp}, None -> quote tm, tp
   | Some _, Some _ ->
-    Format.eprintf "@[Local variable@;<1 2>@[%a@]@ could not have level shifting@]@." Syntax.dump_name p;
+    Format.eprintf "@[<2>Local@ variable@ %a@ could@ not@ have@ level@ shifting@]@." Syntax.dump_name p;
     raise @@ IllTyped {tm = {node = CS.Var (p, s); info = None}; tp = None}
   | None, _ ->
     let ulvl = shifted_blessed_ulvl s in
@@ -120,10 +127,12 @@ let rec infer tm =
       | _ -> invalid_arg "infer"
     end
   | _ ->
-    Format.eprintf "@[<2>Could not infer the type of@ %a@]@." Syntax.dump tm;
+    Format.eprintf "@[<2>Could@ not@ infer@ the@ type@ of@ %a@]@." Syntax.dump tm;
     raise @@ IllTyped {tm; tp = None}
 
-and check tm ~tp =
+(* The [kont] parameter is for the two-stage type checking: first round, we try to check things
+   without unfolding the type, and then we unfold the type if type inference also fails. *)
+and check_ tm ~tp kont =
   match tm.CS.node, tp with
   | CS.Pi (base, name, fam), D.Univ _ ->
     let base = check ~tp base in
@@ -147,9 +156,9 @@ and check tm ~tp =
     if UL.(<) (UL.of_con vsmall) (UL.of_con large)
     then S.univ (quote vsmall)
     else begin
-      Format.eprintf "@[<2>Universe level @[%a@] is not smaller than or equal to @[%a@]@]@."
-        (Mugen.Syntax.Free.dump Mugen.Shift.Gapped.dump Format.pp_print_int) (UL.of_con vsmall)
-        (Mugen.Syntax.Free.dump Mugen.Shift.Gapped.dump Format.pp_print_int) (UL.of_con large);
+      Format.eprintf "@[<2>Universe@ level@ %a@ is@ not@ smaller@ than@ %a@]@."
+        (Mugen.Syntax.Free.dump Mugen.Shift.Linear.dump Format.pp_print_int) (UL.of_con vsmall)
+        (Mugen.Syntax.Free.dump Mugen.Shift.Linear.dump Format.pp_print_int) (UL.of_con large);
       raise @@ IllTyped {tm; tp = Some tp}
     end
   | CS.VirPi (base, name, fam), D.Univ _ ->
@@ -157,10 +166,22 @@ and check tm ~tp =
     let fam = bind ~name ~tp:(eval base) @@ fun _ -> check ~tp fam
     in
     S.pi base fam
-  | _ ->
-    let tm', tp' = infer tm in
-    try equate tp' `LE tp; tm' with
-    | NbE.Unequal -> raise @@ IllTyped {tm; tp = Some tp}
+  | _ -> kont ()
+
+and check tm ~tp =
+  check_ tm ~tp @@ fun () ->
+  match infer tm with
+  | tm', tp' ->
+    begin
+      try equate tp' `LE tp; tm' with
+      | NbE.Unequal -> raise @@ IllTyped {tm; tp = Some tp}
+    end
+  | exception (IllTyped _ as e) ->
+    Format.eprintf "@[<2>Unfolding@ the@ type...@]@.";
+    match tp with
+    | D.Unfold _ ->
+      check_ tm ~tp:(NbE.force_all tp) (fun () -> raise e);
+    | _ -> raise e
 
 let infer_top tm =
   let tm, tp =

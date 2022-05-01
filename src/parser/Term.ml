@@ -19,9 +19,12 @@ let parser atomic_term_ =
   | c:term_constant -> c ~shift:None
   | c:term_constant up s:shift -> c ~shift:(Some s)
 and atomic_term = located atomic_term_
+and parser atomic_shift =
+  | plus i:num -> S.Translate i
+  | multiply i:num -> S.Scale i
 and parser shift =
-  | s:num -> [s]
-  | "{" (E.list0 num comma) "}"
+  | i:num -> [S.Translate i]
+  | "{" (E.list0 atomic_shift semi) "}"
 and parser app_term_ =
   | atomic_term_
   | f:app_term arg:atomic_term ->

@@ -12,7 +12,7 @@ type t = Data.syn =
   | Univ of t
   | VirPi of t * (* binding *) t
   | TpULvl
-  | ULvl of (Mugen.Shift.gapped, t) Mugen.Syntax.endo
+  | ULvl of (Mugen.Shift.linear, t) Mugen.Syntax.endo
   | VirUniv
 
 let var v = Var v
@@ -34,7 +34,7 @@ let vir_univ = VirUniv
 module ULvl =
   Mugen.Builder.Endo.Make
     (struct
-      module Shift = Mugen.Shift.Gapped
+      module Shift = Mugen.Shift.Linear
       type level = t
       let level l = ULvl l
       let unlevel = function ULvl l -> Some l | _ -> None
