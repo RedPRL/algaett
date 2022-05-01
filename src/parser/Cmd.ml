@@ -18,3 +18,4 @@ and parser cmd_ =
 and cmd = located cmd_
 
 let parser prog = section EOF
+let parser repl = s:section {EOF | semisemi} -> s

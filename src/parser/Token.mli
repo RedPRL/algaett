@@ -16,6 +16,7 @@ val section_start : tag Earley_core.Earley.grammar
 val section_end : check_tag Earley_core.Earley.grammar
 
 (* symbols *)
+val semisemi : unit Earley_core.Earley.grammar
 val up : unit Earley_core.Earley.grammar
 val at : unit Earley_core.Earley.grammar
 val colon : unit Earley_core.Earley.grammar

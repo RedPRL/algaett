@@ -32,9 +32,9 @@ let keyword = raw_seg |> Earley.apply @@ fun token ->
   | Some k -> k
   | None -> Earley.give_up ()
 let seg = raw_seg |> Earley.apply @@ fun token ->
-  match Hashtbl.find_opt keywords token with
-  | None -> token
-  | Some _ -> Earley.give_up ()
+  match Hashtbl.mem keywords token with
+  | true -> Earley.give_up ()
+  | false -> token
 let name = Earley.list1 seg sep
 
 let parser pos_num =

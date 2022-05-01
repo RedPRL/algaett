@@ -1,7 +1,6 @@
 [@@@warning "-39"] (* the preprocessor sometimes generates useless 'rec' *)
 
 open Earley_core
-open EmojiShim
 
 module StringSet = Set.Make (String)
 
@@ -11,7 +10,7 @@ struct
 
   let question_mark = StringSet.of_list Emoji.[
       exclamation_question_mark;
-      question_mark;
+      red_question_mark;
       white_question_mark;
     ]
   let sep = StringSet.of_list Emoji.[
@@ -19,7 +18,7 @@ struct
       small_blue_diamond;
     ]
   let other_symbol = StringSet.of_list Emoji.[
-      direct_hit;
+      bullseye;
       keycap_asterisk; (* Keycap Asterisk *)
       up_arrow;
       right_arrow;
@@ -30,9 +29,9 @@ struct
       backhand_index_pointing_right_medium_skin_tone;
       backhand_index_pointing_right_medium_dark_skin_tone;
       backhand_index_pointing_right_dark_skin_tone;
-      heavy_multiplication_x;
-      heavy_plus_sign;
-      heavy_minus_sign;
+      multiply;
+      plus;
+      minus;
     ]
 
   let symbol = List.fold_left StringSet.union StringSet.empty [question_mark; sep; other_symbol]
@@ -67,8 +66,8 @@ let keywords =
   let open KeywordClass in
   let module S = Checker.Syntax in
   Hashtbl.of_seq @@ List.to_seq [
-    Emoji.(keycap_ ^ keycap_1), TermField (fun tm -> S.Fst tm);
-    Emoji.(keycap_ ^ keycap_2), TermField (fun tm -> S.Snd tm);
+    Emoji.(keycap_number_sign ^ keycap_1), TermField (fun tm -> S.Fst tm);
+    Emoji.(keycap_number_sign ^ keycap_2), TermField (fun tm -> S.Snd tm);
     Emoji.milky_way, TermFun1 (fun tm -> S.Univ tm);
     Emoji.ladder, TermVirtualType S.TpULvl;
     Emoji.level_slider, TermVirtualType S.TpULvl;
@@ -92,9 +91,9 @@ let keyword = raw_seg |> Earley.apply @@ fun token ->
   | Some k -> k
   | None -> Earley.give_up ()
 let seg = raw_seg |> Earley.apply @@ fun token ->
-  match Hashtbl.find_opt keywords token with
-  | None -> token
-  | Some _ -> Earley.give_up ()
+  match Hashtbl.mem keywords token with
+  | true -> Earley.give_up ()
+  | false -> token
 let name = Earley.list1 seg sep
 
 let parser digit =
@@ -116,6 +115,6 @@ let parser pos_num =
        | Some i -> i
        | None -> Earley.give_up ()
 let parser num_ =
-  | STR(Emoji.heavy_plus_sign)? i:pos_num -> i
-  | STR(Emoji.heavy_minus_sign) i:pos_num -> -i
+  | STR(Emoji.plus)? i:pos_num -> i
+  | STR(Emoji.minus) i:pos_num -> -i
 let num = Earley.no_blank_layout num_

@@ -1,7 +1,7 @@
-(executable
+(library
  (name Parser)
  (preprocess (action (run pa_ocaml %{input-file})))
- (libraries bwd algaeff yuujinchou earley.core emoji earley.str algaett.checker algaett.driver)
+ (libraries bwd algaeff yuujinchou earley.core earley.str emoji algaett.checker algaett.driver)
  (public_name algaett.parser))
 
 (env (_ (env-vars (LOCATE locate))))

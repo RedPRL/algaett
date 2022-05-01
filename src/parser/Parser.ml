@@ -1,5 +1,4 @@
 open Earley_core
 
-let _parse_file f = Earley.parse_file Cmd.prog Blanks.default f
-
-let _ = Earley.parse_string Cmd.prog Blanks.default Sys.argv.(1)
+let parse_file f = Earley.parse_file Cmd.prog Blanks.default f
+let parse_repl ?filename () = Earley.parse_channel ?filename Cmd.repl Blanks.default In_channel.stdin
