@@ -9,5 +9,6 @@ let eval_top = Semantics.eval_top
 
 let quote = Quote.con
 
+exception Unequal = Conversion.Unequal
 let force_all = Conversion.force_all
 let equate = Conversion.equate

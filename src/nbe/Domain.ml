@@ -44,4 +44,4 @@ module ULvl =
     end)
 
 let univ_top = Univ ULvl.top
-let vir_univ = Univ ULvl.top
+let vir_univ = VirUniv

@@ -54,7 +54,7 @@ include struct
   let resolve p = Effect.perform (Resolve p)
 end
 
-exception IllTyped
+exception IllTyped of {tm: Syntax.t; tp: D.t option}
 
 let rec infer tm =
   match tm.CS.node with
@@ -102,7 +102,9 @@ let rec infer tm =
     let l = check ~tp:D.TpULvl l in
     let s = Mugen.Shift.Gapped.of_prefix s in
     S.ULvl.shifted l s, D.TpULvl
-  | _ -> raise IllTyped
+  | _ ->
+    Format.eprintf "@[<2>Could not infer the type of@ %a@]@." Syntax.dump tm;
+    raise @@ IllTyped {tm; tp = None}
 
 and check tm ~tp =
   match tm.CS.node, tp with
@@ -126,7 +128,9 @@ and check tm ~tp =
   | CS.Univ small, D.Univ large ->
     let small = check ~tp:D.TpULvl small in
     let vsmall = eval small in
-    if UL.(<) (UL.of_con vsmall) (UL.of_con large) then S.univ small else raise IllTyped
+    if UL.(<) (UL.of_con vsmall) (UL.of_con large)
+    then S.univ small
+    else raise @@ IllTyped {tm; tp = Some tp}
   | CS.VirPi (base, name, fam), D.Univ _ ->
     let base = check ~tp:D.vir_univ base in
     let fam = bind ~name ~tp:(eval base) @@ fun _ -> check ~tp fam
@@ -135,9 +139,9 @@ and check tm ~tp =
   | CS.TpULvl, D.VirUniv ->
     S.TpULvl
   | _ ->
-    let tm, tp' = infer tm in
-    equate tp' `LE tp;
-    tm
+    let tm', tp' = infer tm in
+    try equate tp' `LE tp; tm' with
+    | NbE.Unequal -> raise @@ IllTyped {tm; tp = Some tp}
 
 let infer_top tm = Eff.run ~env:empty_env @@ fun () -> infer tm
 let check_top tm ~tp = Eff.run ~env:empty_env @@ fun () -> check tm ~tp

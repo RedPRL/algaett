@@ -2,7 +2,6 @@ open Algaeff.StdlibShim
 
 module Syntax = Syntax
 
-exception IllTyped = Checker.IllTyped
 exception NotInScope = Scope.NotInScope
 
 type resolve_data = Checker.resolve_data

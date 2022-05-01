@@ -5,6 +5,6 @@ type resolve_data =
   | Def of {tm: NbE.Domain.t Lazy.t; tp: NbE.Domain.t}
 type _ Effect.t += Resolve : Yuujinchou.Trie.path -> resolve_data Effect.t
 
-exception IllTyped
+exception IllTyped of {tm: Syntax.t; tp: NbE.Domain.t option}
 val infer_top : Syntax.t -> NbE.Syntax.t * NbE.Domain.t
 val check_top : Syntax.t -> tp:NbE.Domain.t -> NbE.Syntax.t
