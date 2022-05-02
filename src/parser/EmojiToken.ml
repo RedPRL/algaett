@@ -21,6 +21,7 @@ struct
       bullseye;
       keycap_asterisk; (* Keycap Asterisk *)
       up_arrow;
+      up_button;
       right_arrow;
       left_arrow_curving_right;
       backhand_index_pointing_right;
