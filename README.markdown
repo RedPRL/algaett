@@ -8,7 +8,7 @@ This development is an experiment with the following goals:
 
 ## Smalltt
 
-The core NbE algorithm closely follows [András Kovács’s smalltt.](https://github.com/AndrasKovacs/smalltt).
+The core NbE algorithm closely follows [András Kovács’s smalltt.](https://github.com/AndrasKovacs/smalltt)
 Here are some notable differences:
 
 1. We intentionally do not implement unification.
@@ -28,6 +28,9 @@ Here are some notable differences:
 - [mugen](https://redprl.org/mugen/mugen/Mugen): universe levels
 - [yuujinchou](https://redprl.org/yuujinchou/yuujinchou/Yuujinchou): namespaces
 
+## Beyong LR
+
+We are using the Earley’s parsing algorithm which can handle all context-free grammars.
 
 ## Documentation
 

@@ -1,9 +1,9 @@
 open Algaeff.StdlibShim
 
 exception NotInScope
-type _ Effect.t +=
-  | ResolveUnit : Bantorra.Manager.unitpath -> Checker.resolve_data Yuujinchou.Trie.t Effect.t
-  | UnusedImports : Bantorra.Manager.unitpath list -> unit Effect.t
+
+exception%effect ResolveUnit : Bantorra.Manager.unitpath -> Checker.resolve_data Yuujinchou.Trie.t
+exception%effect UnusedImports : Bantorra.Manager.unitpath list -> unit
 
 type empty = |
 type modifier = empty Yuujinchou.Modifier.t
@@ -38,17 +38,12 @@ let import source m =
   S.import_subtree ([], u)
 
 let handle_resolve f =
-  let open Effect.Deep in
-  try_with f ()
-    { effc = fun (type a) (eff : a Effect.t) ->
-          match eff with
-          | Checker.Resolve p -> Option.some @@
-            fun (k : (a, _) continuation) ->
-            Algaeff.Fun.Deep.finally k (fun () ->
-                match S.resolve p with
-                | None -> raise NotInScope
-                | Some data -> Usage.use data.source; data.data)
-          | _ -> None }
+  try f () with
+  | [%effect? (Checker.Resolve p), k] ->
+    Algaeff.Fun.Deep.finally k (fun () ->
+        match S.resolve p with
+        | None -> raise NotInScope
+        | Some data -> Usage.use data.source; data.data)
 
 let run f =
   let f () =
@@ -61,12 +56,7 @@ let run f =
     ans
   in
   let open Effect.Deep in
-  try_with f ()
-    { effc = fun (type a) (eff : a Effect.t) ->
-          match eff with
-          | S.Act.BindingNotFound _ -> Option.some @@
-            fun (k : (a, _) continuation) -> continue k ()
-          | S.Act.Shadowing (_, _, _, new_data) -> Option.some @@
-            fun (k : (a, _) continuation) -> continue k new_data
-          | S.Act.Hook (_, _, _, _) -> .
-          | _ -> None }
+  try f () with
+  | [%effect? S.Act.BindingNotFound _, k ]-> continue k ()
+  | [%effect? S.Act.Shadowing {latter; _}, k] -> continue k latter
+  | [%effect? S.Act.Hook _, _] -> .

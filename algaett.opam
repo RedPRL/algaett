@@ -18,14 +18,16 @@ depends: [
   "algaeff"
   "bantorra"
   "mugen"
+  "ppx_effects"
   "yuujinchou"
 ]
 pin-depends: [
   [ "algaeff.~dev" "git+https://github.com/RedPRL/algaeff" ]
-  [ "bantorra.0.2.0" "git+https://github.com/RedPRL/bantorra" ]
+  [ "bantorra.0.2.0~dev" "git+https://github.com/RedPRL/bantorra" ]
   [ "emoji.1.2.0~pre" "git+https://github.com/favonia/ocaml-emoji#improve-scripts" ]
   [ "mugen.~dev" "git+https://github.com/RedPRL/mugen" ]
-  [ "yuujinchou.3.0.0" "git+https://github.com/RedPRL/yuujinchou" ]
+  [ "ppx_effects.~dev" "git+https://github.com/favonia/ppx_effects#500" ]
+  [ "yuujinchou.3.0.0~dev" "git+https://github.com/RedPRL/yuujinchou" ]
 ]
 build: [
   ["dune" "build" "-p" name "-j" jobs]
