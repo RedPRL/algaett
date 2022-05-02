@@ -6,6 +6,7 @@ open KeywordClass
 
 let keyword = Earley.alternatives [AsciiToken.keyword; EmojiToken.keyword]
 let name = Earley.alternatives [AsciiToken.name; EmojiToken.name]
+let pos_num = Earley.alternatives [AsciiToken.pos_num; EmojiToken.pos_num]
 let num = Earley.alternatives [AsciiToken.num; EmojiToken.num]
 
 type tag = {tag : string list}
@@ -21,18 +22,19 @@ let import = keyword |> Earley.apply @@ function CmdImport -> () | _ -> Earley.g
 let section_start = keyword |> Earley.apply @@ function CmdSectionStart {tag} -> {tag} | _ -> Earley.give_up ()
 let section_end = keyword |> Earley.apply @@ function CmdSectionEnd {check_tag} -> {check_tag} | _ -> Earley.give_up ()
 
-let semisemi = Earley.greedy @@ parser {";;"} -> ()
-let semi = Earley.greedy @@ parser {";"} -> ()
-let up = Earley.greedy @@ parser {STR(Emoji.up_arrow) | "^"} -> ()
 let at = Earley.greedy @@ parser {STR(Emoji.bullseye) | "@"} -> ()
-let plus = Earley.greedy @@ parser { STR(Emoji.plus) | "+" } -> ()
-let multiply = Earley.greedy @@ parser { STR(Emoji.multiply) | "*" } -> ()
-let equal = Earley.greedy @@ parser { STR(Emoji.heavy_equals_sign) | "=" } -> ()
 let colon = Earley.greedy @@ parser ":" -> ()
 let comma = Earley.greedy @@ parser "," -> ()
-let right_arrow = Earley.greedy @@ parser {STR(Emoji.right_arrow) | "→" | "->"} -> ()
+let dollar = Earley.greedy @@ parser {STR(Emoji.back_arrow) | STR(Emoji.dollar_banknote) | "$"} -> ()
+let equal = Earley.greedy @@ parser { STR(Emoji.heavy_equals_sign) | "=" } -> ()
 let maps_to = Earley.greedy @@ parser {STR(Emoji.left_arrow_curving_right) | "=>"} -> ()
+let multiply = Earley.greedy @@ parser { STR(Emoji.multiply) | "*" } -> ()
+let plus = Earley.greedy @@ parser { STR(Emoji.plus) | "+" } -> ()
+let right_arrow = Earley.greedy @@ parser {STR(Emoji.right_arrow) | "→" | "->"} -> ()
+let semi = Earley.greedy @@ parser {";"} -> ()
+let semisemi = Earley.greedy @@ parser {";;"} -> ()
 let times = Earley.greedy @@ parser {STR(Emoji.multiply) | STR(Emoji.keycap_asterisk) | "×" | "*"} -> ()
+let up = Earley.greedy @@ parser {STR(Emoji.up_arrow) | "^"} -> ()
 
 let assign = Earley.greedy @@ parser
     { ":="

@@ -1,5 +1,7 @@
 open Bwd
 
+module ULvlShift = Mugen.Shift.LinearPostInc
+
 [@@@warning "-30"]
 type syn =
   | Var of int
@@ -15,7 +17,7 @@ type syn =
   | Univ of syn
   | VirPi of syn * (* binding *) syn
   | TpULvl
-  | ULvl of (Mugen.Shift.linear, syn) Mugen.Syntax.endo
+  | ULvl of (ULvlShift.t, syn) Mugen.Syntax.endo
   | VirUniv
 and env = value Lazy.t bwd (* invariant: lazy values must be effect-less *)
 and closure = Clo of {body : syn; env : env}
@@ -29,7 +31,7 @@ and value =
   | Univ of value
   | VirPi of value * closure
   | TpULvl
-  | ULvl of (Mugen.Shift.linear, value) Mugen.Syntax.endo
+  | ULvl of (ULvlShift.t, value) Mugen.Syntax.endo
   | VirUniv
 and cut = cut_head * frame bwd
 and unfold = unfold_head * frame bwd * value Lazy.t (* invariant: lazy values must be effect-less *)

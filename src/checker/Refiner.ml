@@ -61,10 +61,11 @@ end
 exception IllTyped of {tm: Syntax.t; tp: D.t option}
 
 let elab_shift =
-  let open Mugen.Shift.Linear in
+  let open NbE.ULvl.Shift in
   function
   | CS.Translate i -> trans i
   | CS.Scale i -> scale i
+  | CS.PostInc i -> postinc i
 
 let shifted_blessed_ulvl =
   function
@@ -127,7 +128,7 @@ let rec infer tm =
       | _ -> invalid_arg "infer"
     end
   | _ ->
-    Format.eprintf "@[<2>Could@ not@ infer@ the@ type@ of@ %a@]@." Syntax.dump tm;
+    (* Format.eprintf "@[<2>Could@ not@ infer@ the@ type@ of@ %a@]@." Syntax.dump tm; *)
     raise @@ IllTyped {tm; tp = None}
 
 (* The [kont] parameter is for the two-stage type checking: first round, we try to check things
@@ -157,8 +158,8 @@ and check_ tm ~tp kont =
     then S.univ (quote vsmall)
     else begin
       Format.eprintf "@[<2>Universe@ level@ %a@ is@ not@ smaller@ than@ %a@]@."
-        (Mugen.Syntax.Free.dump Mugen.Shift.Linear.dump Format.pp_print_int) (UL.of_con vsmall)
-        (Mugen.Syntax.Free.dump Mugen.Shift.Linear.dump Format.pp_print_int) (UL.of_con large);
+        (Mugen.Syntax.Free.dump NbE.ULvl.Shift.dump Format.pp_print_int) (UL.of_con vsmall)
+        (Mugen.Syntax.Free.dump NbE.ULvl.Shift.dump Format.pp_print_int) (UL.of_con large);
       raise @@ IllTyped {tm; tp = Some tp}
     end
   | CS.VirPi (base, name, fam), D.Univ _ ->
@@ -177,7 +178,6 @@ and check tm ~tp =
       | NbE.Unequal -> raise @@ IllTyped {tm; tp = Some tp}
     end
   | exception (IllTyped _ as e) ->
-    Format.eprintf "@[<2>Unfolding@ the@ type...@]@.";
     match tp with
     | D.Unfold _ ->
       check_ tm ~tp:(NbE.force_all tp) (fun () -> raise e);

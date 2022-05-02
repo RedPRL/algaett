@@ -1,5 +1,7 @@
+module Shift = Data.ULvlShift
+
 module P = struct
-  module Shift = Mugen.Shift.Linear
+  module Shift = Shift
   type var = int
   let equal_var = Int.equal
 end

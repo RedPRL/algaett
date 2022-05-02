@@ -28,10 +28,12 @@ let dump_bound_name fmt =
 type shift =
   | Translate of int
   | Scale of int
+  | PostInc of int
 let dump_shift fmt =
   function
   | Translate i -> Format.fprintf fmt "+%i" i
   | Scale i -> Format.fprintf fmt "*%i" i
+  | PostInc i -> Format.fprintf fmt "$%i" i
 
 type t = t_ node
 and t_ =
