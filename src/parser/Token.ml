@@ -35,7 +35,6 @@ let semi = Earley.greedy @@ parser {";"} -> ()
 let semisemi = Earley.greedy @@ parser {";;"} -> ()
 let times = Earley.greedy @@ parser {STR(Emoji.multiply) | STR(Emoji.keycap_asterisk) | "×" | "*"} -> ()
 let up = Earley.greedy @@ parser {STR(Emoji.up_arrow) | "^"} -> ()
-
 let assign = Earley.greedy @@ parser
     { ":="
     | "≔"
