@@ -58,7 +58,8 @@ include struct
   let resolve p = Effect.perform (Resolve p)
 end
 
-exception IllTyped of {tm: Syntax.t; tp: D.t option}
+exception NotInferable of {tm: Syntax.t}
+exception IllTyped of {tm: Syntax.t; tp: D.t}
 
 let elab_shift =
   let open NbE.ULvl.Shift in
@@ -82,7 +83,7 @@ let infer_var p s =
   | Some {tm; tp}, None -> quote tm, tp
   | Some _, Some _ ->
     Format.eprintf "@[<2>Local@ variable@ %a@ could@ not@ have@ level@ shifting@]@." Syntax.dump_name p;
-    raise @@ IllTyped {tm = {node = CS.Var (p, s); info = None}; tp = None}
+    raise @@ NotInferable {tm = {node = CS.Var (p, s); info = None}}
   | None, _ ->
     let ulvl = shifted_blessed_ulvl s in
     let tm, tp =
@@ -127,11 +128,13 @@ let rec infer tm =
     end
   | _ ->
     (* Format.eprintf "@[<2>Could@ not@ infer@ the@ type@ of@ %a@]@." Syntax.dump tm; *)
-    raise @@ IllTyped {tm; tp = None}
+    raise @@ NotInferable {tm}
 
-(* The [kont] parameter is for the two-stage type checking: first round, we try to check things
-   without unfolding the type, and then we unfold the type if type inference also fails. *)
-and check_ tm ~tp kont =
+(* The [fallback_infer] parameter is for the two-stage type checking: first round,
+   we try to check things without unfolding the type, and then we unfold the type
+   if type inference also fails. During the second round, we do not want to try
+   the type inference again becouse it will have already failed once. *)
+and check ?(fallback_infer=true) tm ~tp  =
   match tm.CS.node, tp with
   | CS.Pi (base, name, fam), D.Univ _ ->
     let base = check ~tp base in
@@ -158,28 +161,31 @@ and check_ tm ~tp kont =
       Format.eprintf "@[<2>Universe@ level@ %a@ is@ not@ smaller@ than@ %a@]@."
         (Mugen.Syntax.Free.dump NbE.ULvl.Shift.dump Format.pp_print_int) (UL.of_con vsmall)
         (Mugen.Syntax.Free.dump NbE.ULvl.Shift.dump Format.pp_print_int) (UL.of_con large);
-      raise @@ IllTyped {tm; tp = Some tp}
+      raise @@ IllTyped {tm; tp}
     end
   | CS.VirPi (base, name, fam), D.Univ _ ->
     let base = check ~tp:D.vir_univ base in
     let fam = bind ~name ~tp:(eval base) @@ fun _ -> check ~tp fam
     in
     S.pi base fam
-  | _ -> kont ()
+  | _ ->
+    if fallback_infer then
+      try
+        match infer tm with
+        | tm', tp' ->
+          begin
+            try equate tp' `LE tp; tm' with
+            | NbE.Unequal -> raise @@ IllTyped {tm; tp}
+          end
+      with NotInferable _ ->
+      match tp with
+      | D.Unfold _ ->
+        check ~fallback_infer:false tm ~tp:(NbE.force_all tp)
+      | _ ->
+        raise @@ IllTyped {tm; tp}
+    else
+      raise @@ IllTyped {tm; tp}
 
-and check tm ~tp =
-  check_ tm ~tp @@ fun () ->
-  match infer tm with
-  | tm', tp' ->
-    begin
-      try equate tp' `LE tp; tm' with
-      | NbE.Unequal -> raise @@ IllTyped {tm; tp = Some tp}
-    end
-  | exception (IllTyped _ as e) ->
-    match tp with
-    | D.Unfold _ ->
-      check_ tm ~tp:(NbE.force_all tp) (fun () -> raise e);
-    | _ -> raise e
 
 let infer_top tm =
   let tm, tp =
