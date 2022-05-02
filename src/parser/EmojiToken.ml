@@ -108,12 +108,13 @@ let parser digit =
   | STR(Emoji.keycap_9) -> "9"
   | STR(Emoji.keycap_10) -> "10"
   | STR(Emoji.hundred_points) -> "100"
-let parser pos_num =
+let parser pos_num_ =
   | ds:digit+ ->
        match int_of_string_opt (String.concat "" ds) with
        | Some i -> i
        | None -> Earley.give_up ()
+let pos_num = Earley.no_blank_layout pos_num_
 let parser num_ =
-  | STR(Emoji.plus)? i:pos_num -> i
-  | STR(Emoji.minus) i:pos_num -> -i
+  | STR(Emoji.plus)? i:pos_num_ -> i
+  | STR(Emoji.minus) i:pos_num_ -> -i
 let num = Earley.no_blank_layout num_
