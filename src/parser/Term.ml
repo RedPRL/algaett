@@ -22,13 +22,8 @@ and atomic_term = located atomic_term_
 and parser atomic_shift =
   | plus i:pos_num -> S.Translate i
   | ps:(E.greedy @@ E.list1 plus (E.empty ())) -> S.Translate (List.length ps)
-  | multiply i:pos_num -> S.Scale i
-  | ms:(E.greedy @@ E.list1 multiply (E.empty ())) -> S.Translate (List.length ms)
-  | dollar i:pos_num -> S.PostInc i
-  | ds:(E.greedy @@ E.list1 dollar (E.empty ())) -> S.PostInc (List.length ds)
 and parser shift =
-  | i:pos_num ds:(E.greedy @@ E.list0 dollar (E.empty ())) -> [S.Translate i; S.PostInc (List.length ds)]
-  | ds:(E.greedy @@ E.list1 dollar (E.empty ())) -> [S.PostInc (List.length ds)]
+  | i:pos_num -> [S.Translate i]
   | "{" (E.list0 atomic_shift (E.empty ())) "}"
   | "{" d:pos_num ss:(E.list0 atomic_shift (E.empty ())) "}" -> (S.Translate d)::ss
 and parser app_term_ =

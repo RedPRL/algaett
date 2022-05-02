@@ -1,6 +1,6 @@
 open Bwd
 
-module ULvlShift = Mugen.Shift.LinearPostInc
+module ULvlShift = Mugen.Shift.Crude
 
 [@@@warning "-30"]
 type syn =

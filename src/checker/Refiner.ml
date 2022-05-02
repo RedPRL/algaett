@@ -64,8 +64,6 @@ let elab_shift =
   let open NbE.ULvl.Shift in
   function
   | CS.Translate i -> trans i
-  | CS.Scale i -> scale i
-  | CS.PostInc i -> postinc i
 
 let shifted_blessed_ulvl =
   function
