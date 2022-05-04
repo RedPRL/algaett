@@ -1,6 +1,8 @@
 open Bwd
 
-module ULvlShift = Mugen.Shift.Crude
+module ULvlShift = Mugen.Shift.Trans
+
+type global = Bantorra.Manager.unitpath * int
 
 [@@@warning "-30"]
 type syn =
