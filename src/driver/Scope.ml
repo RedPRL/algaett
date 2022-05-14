@@ -2,20 +2,20 @@ open Algaeff.StdlibShim
 
 exception NotInScope
 
-exception%effect ResolveUnit : Bantorra.Manager.unitpath -> Checker.resolve_data Yuujinchou.Trie.t
-exception%effect UnusedImports : Bantorra.Manager.unitpath list -> unit
+exception%effect ResolveUnit : Bantorra.Manager.path -> Checker.resolve_data Yuujinchou.Trie.t
+exception%effect UnusedImports : Bantorra.Manager.path list -> unit
 
 type empty = |
-type modifier = empty Yuujinchou.Modifier.t
+type modifier = empty Yuujinchou.Language.modifier
 
 type resolve_data =
-  { source : Bantorra.Manager.unitpath option
+  { source : Bantorra.Manager.path option
   ; data : Checker.resolve_data
   }
 
 module Usage =
 struct
-  module S = Set.Make (struct type t = Bantorra.Manager.unitpath let compare = compare end)
+  module S = Set.Make (struct type t = Bantorra.Manager.path let compare = compare end)
   type state = {imported: S.t; used: S.t}
   module E = Algaeff.State.Make (struct type nonrec state = state end)
   let import u = E.modify (fun st -> {st with imported = S.add u st.imported})
@@ -31,7 +31,7 @@ let section = S.section
 let get_export () = Yuujinchou.Trie.mapi (fun ~path:_ d -> d.data) @@ S.get_export()
 let import source m =
   Usage.import source;
-  let u = S.Act.exec m @@
+  let u = S.Mod.exec m @@
     Yuujinchou.Trie.mapi (fun ~path:_ data -> {source = Some source; data}) @@
     Effect.perform (ResolveUnit source)
   in
@@ -57,6 +57,6 @@ let run f =
   in
   let open Effect.Deep in
   try f () with
-  | [%effect? S.Act.BindingNotFound _, k ]-> continue k ()
-  | [%effect? S.Act.Shadowing {latter; _}, k] -> continue k latter
-  | [%effect? S.Act.Hook _, _] -> .
+  | [%effect? S.Mod.BindingNotFound _, k ]-> continue k ()
+  | [%effect? S.Mod.Shadowing {latter; _}, k] -> continue k latter
+  | [%effect? S.Mod.Hook _, _] -> .

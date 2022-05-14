@@ -18,7 +18,7 @@ and parser cmd_ =
   | quit ->
     S.Quit
   | import u:name ->
-      S.Import {unit_path = u; modifier = Yuujinchou.Modifier.seq []}
+      S.Import {unit_path = u; modifier = Yuujinchou.Language.seq []}
   | tag:section_start prefix:{EMPTY -> [] | name} block:section check:section_end ->
       if check.check_tag tag.tag then S.Section {prefix; block} else Earley.give_up ()
 and cmd = located cmd_

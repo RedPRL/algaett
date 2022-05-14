@@ -3,8 +3,8 @@ module CS = Syntax
 exception Quit
 
 type _ Effect.t +=
-  | PreImport : Bantorra.Manager.unitpath -> unit Effect.t
-  | Import : Bantorra.Manager.unitpath -> Checker.resolve_data Yuujinchou.Trie.t Effect.t
+  | PreImport : Bantorra.Manager.path -> unit Effect.t
+  | Import : Bantorra.Manager.path -> Checker.resolve_data Yuujinchou.Trie.t Effect.t
 
 let include_singleton name data =
   match name with
