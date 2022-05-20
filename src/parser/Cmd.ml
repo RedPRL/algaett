@@ -4,7 +4,7 @@ open Earley_core
 open Locate
 open Token
 
-module S = Driver.Syntax
+module S = Interpreter.Syntax
 
 let parser section_ = cmd*
 and section = located section_

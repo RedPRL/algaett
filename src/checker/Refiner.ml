@@ -1,4 +1,3 @@
-open Algaeff.StdlibShim
 open Bwd
 open BwdNotation
 
@@ -11,7 +10,7 @@ type cell = {tm : D.t; tp : D.t}
 
 type env = {
   blessed_ulvl : D.t;
-  local_names : cell Yuujinchou.Trie.t;
+  local_names : (cell, unit) Yuujinchou.Trie.t;
   locals : D.t Lazy.t bwd;
   size : int;
 }
@@ -23,11 +22,25 @@ let top_env = {
   size = 1;
 }
 
-module Eff = Algaeff.Reader.Make (struct type nonrec env = env end)
+type resolve_data =
+  | Axiom of {tp : NbE.Domain.t}
+  | Def of {tm: NbE.Domain.t Lazy.t; tp: NbE.Domain.t}
 
-open struct
+module Internal =
+struct
+  exception%effect Resolve : Yuujinchou.Trie.path -> resolve_data
+  let resolve p = Effect.perform (Resolve p)
+
+  type error =
+    | NotInferable of {tm: Syntax.t}
+    | IllTyped of {tm: Syntax.t; tp: D.t}
+  exception Error of error
+  let not_inferable ~tm = raise (Error (NotInferable {tm}))
+  let ill_typed ~tm ~tp = raise (Error (IllTyped {tm; tp}))
+  let trap f = try Result.ok (f ()) with Error e -> Result.error e
+
+  module Eff = Algaeff.Reader.Make (struct type nonrec env = env end)
   (* invariant: the return values must be effect-less *)
-
   let eval tm = NbE.eval ~env:(Eff.read()).locals tm
   let lazy_eval tm =
     let env = (Eff.read()).locals in
@@ -44,22 +57,12 @@ open struct
          local_names =
            match name with
            | None -> env.local_names
-           | Some name -> Yuujinchou.Trie.update_singleton name (fun _ -> Some {tm = arg; tp}) env.local_names})
+           | Some name -> Yuujinchou.Trie.update_singleton name (fun _ -> Some ({tm = arg; tp}, ())) env.local_names})
     @@ fun () -> f arg
   let blessed_ulvl () = (Eff.read()).blessed_ulvl
 end
 
-include struct
-  type resolve_data =
-    | Axiom of {tp : NbE.Domain.t}
-    | Def of {tm: NbE.Domain.t Lazy.t; tp: NbE.Domain.t}
-  type _ Effect.t += Resolve : Yuujinchou.Trie.path -> resolve_data Effect.t
-
-  let resolve p = Effect.perform (Resolve p)
-end
-
-exception NotInferable of {tm: Syntax.t}
-exception IllTyped of {tm: Syntax.t; tp: D.t}
+open Internal
 
 let elab_shift =
   let open NbE.ULvl.Shift in
@@ -80,10 +83,10 @@ let app_ulvl tp ulvl =
 
 let infer_var p s =
   match resolve_local p, s with
-  | Some {tm; tp}, None -> quote tm, tp
+  | Some ({tm; tp}, ()), None -> quote tm, tp
   | Some _, Some _ ->
     Format.eprintf "@[<2>Local@ variable@ %a@ could@ not@ have@ level@ shifting@]@." Syntax.dump_name p;
-    raise @@ NotInferable {tm = {node = CS.Var (p, s); info = None}}
+    not_inferable ~tm:{node = CS.Var (p, s); info = None}
   | None, _ ->
     let ulvl = shifted_blessed_ulvl s in
     let tm, tp =
@@ -128,7 +131,7 @@ let rec infer tm =
     end
   | _ ->
     (* Format.eprintf "@[<2>Could@ not@ infer@ the@ type@ of@ %a@]@." Syntax.dump tm; *)
-    raise @@ NotInferable {tm}
+    not_inferable ~tm
 
 (* The [fallback_infer] parameter is for the two-stage type checking: first round,
    we try to check things without unfolding the type, and then we unfold the type
@@ -161,7 +164,7 @@ and check ?(fallback_infer=true) tm ~tp  =
       Format.eprintf "@[<2>Universe@ level@ %a@ is@ not@ smaller@ than@ %a@]@."
         (Mugen.Syntax.Free.dump NbE.ULvl.Shift.dump Format.pp_print_int) (UL.of_con vsmall)
         (Mugen.Syntax.Free.dump NbE.ULvl.Shift.dump Format.pp_print_int) (UL.of_con large);
-      raise @@ IllTyped {tm; tp}
+      ill_typed ~tm ~tp
     end
   | CS.VirPi (base, name, fam), D.Univ _ ->
     let base = check ~tp:D.vir_univ base in
@@ -175,27 +178,41 @@ and check ?(fallback_infer=true) tm ~tp  =
         | tm', tp' ->
           begin
             try equate tp' `LE tp; tm' with
-            | NbE.Unequal -> raise @@ IllTyped {tm; tp}
+            | NbE.Unequal -> ill_typed ~tm ~tp
           end
-      with NotInferable _ ->
+      with Error (NotInferable _) ->
       match tp with
       | D.Unfold _ ->
         check ~fallback_infer:false tm ~tp:(NbE.force_all tp)
       | _ ->
-        raise @@ IllTyped {tm; tp}
+        ill_typed ~tm ~tp
     else
-      raise @@ IllTyped {tm; tp}
+      ill_typed ~tm ~tp
 
+(* the public interface *)
 
+type error = Internal.error =
+  | NotInferable of {tm: Syntax.t}
+  | IllTyped of {tm: Syntax.t; tp: D.t}
 let infer_top tm =
+  trap @@ fun () ->
   let tm, tp =
     Eff.run ~env:top_env @@ fun () ->
     let tm, tp = infer tm in tm, quote tp
   in
   S.lam tm, NbE.eval_top (S.vir_pi S.tp_ulvl tp)
 let check_tp_top tp =
+  trap @@ fun () ->
   let tp = Eff.run ~env:top_env @@ fun () -> check tp ~tp:D.univ_top in
   S.vir_pi S.tp_ulvl tp
 let check_top tm ~tp =
+  trap @@ fun () ->
   let tm = Eff.run ~env:top_env @@ fun () -> check tm ~tp:(app_ulvl tp @@ blessed_ulvl()) in
   S.lam tm
+
+type handler = { resolve : Yuujinchou.Trie.path -> resolve_data }
+
+let run f h =
+  try f () with [%effect? Resolve p, k] -> Algaeff.Fun.Deep.finally k (fun () -> h.resolve p)
+
+let reperform : handler = { resolve = Internal.resolve }

@@ -1,4 +1,5 @@
 (library
  (name Checker)
+ (preprocess (pps ppx_effects))
  (libraries bwd algaeff mugen yuujinchou algaett.nbe)
  (public_name algaett.checker))
