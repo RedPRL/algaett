@@ -11,4 +11,4 @@ val check_top : Syntax.t -> tp:NbE.Domain.t -> (NbE.Syntax.t, error) result
 
 type handler = { resolve : Yuujinchou.Trie.path -> resolve_data }
 val run : (unit -> 'a) -> handler -> 'a
-val reperform : handler
+val perform : handler

@@ -7,4 +7,4 @@ val use : id -> unit
 
 type handler = { warn_unused : info -> unit }
 val run : (unit -> 'a) -> handler -> 'a
-val reperform : handler
+val perform : handler

@@ -12,4 +12,4 @@ type handler = UnitEffect.handler =
     preload : Bantorra.Manager.path -> unit;
     warn_unused : Used.info -> unit }
 let run = UnitEffect.run
-let reperform = UnitEffect.reperform
+let perform = UnitEffect.perform

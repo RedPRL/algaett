@@ -215,4 +215,4 @@ type handler = { resolve : Yuujinchou.Trie.path -> resolve_data }
 let run f h =
   try f () with [%effect? Resolve p, k] -> Algaeff.Fun.Deep.finally k (fun () -> h.resolve p)
 
-let reperform : handler = { resolve = Internal.resolve }
+let perform : handler = { resolve = Internal.resolve }

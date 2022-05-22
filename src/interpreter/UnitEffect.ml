@@ -21,7 +21,7 @@ type handler =
 let load p = Effect.perform (Load p)
 let preload p = Effect.perform (Preload p)
 let warn_unused i = Effect.perform (WarnUnused i)
-let reperform : handler = { load; preload; warn_unused }
+let perform : handler = { load; preload; warn_unused }
 
 module S = Yuujinchou.Scope.Make
     (struct

@@ -12,4 +12,4 @@ type handler =
     preload : Bantorra.Manager.path -> unit;
     warn_unused : Bantorra.Manager.path Syntax.node -> unit }
 val run : (unit -> 'a) -> handler -> 'a
-val reperform : handler
+val perform : handler

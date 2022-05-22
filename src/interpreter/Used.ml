@@ -11,7 +11,7 @@ open Internal
 
 exception%effect WarnUnused : info -> unit
 type handler = { warn_unused : info -> unit }
-let reperform : handler = { warn_unused = fun info -> Effect.perform (WarnUnused info) }
+let perform : handler = { warn_unused = fun info -> Effect.perform (WarnUnused info) }
 
 type id = A.id
 let new_ u = let id = A.insert u in S.modify (IntSet.add id); id
