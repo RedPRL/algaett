@@ -1,0 +1,4 @@
+(library
+ (name Loader)
+ (libraries bwd algaeff yuujinchou algaett.checker algaett.interpreter algaett.parser)
+ (public_name algaett.loader))

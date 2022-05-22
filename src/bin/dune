@@ -1,0 +1,10 @@
+(env (static (flags (:standard -ccopt "-static -s"))))
+
+(executables
+ (names Main)
+ (libraries cmdliner algaett.parser algaett.interpreter algaett.loader))
+
+(install
+ (section bin)
+ (package algaett)
+ (files (Main.exe as algaett)))
