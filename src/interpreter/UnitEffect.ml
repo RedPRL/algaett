@@ -45,7 +45,7 @@ let run_scope f =
   S.run
     (fun () ->
        let ans = f () in
-       Seq.iter (Option.iter Used.use) @@ Yuujinchou.Trie.to_seq_tags @@ S.get_export ();
+       Seq.iter (Option.iter Used.use) @@ Yuujinchou.Trie.set_of_tags (Option.compare Used.compare_id) @@ S.get_export ();
        ans)
     { not_found = (fun ?context:_ _ -> ());
       shadow = (fun ?context:_ _ _ y -> y);

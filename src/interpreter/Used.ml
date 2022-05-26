@@ -2,9 +2,9 @@ type info = Bantorra.Manager.path Checker.Syntax.node
 
 module Internal =
 struct
-  module A = Algaeff.AutoIncrement.Make (struct type row = info end)
-  module IntSet = Set.Make (Int)
-  module S = Algaeff.State.Make (struct type state = IntSet.t end)
+  module U = Algaeff.UniqueID.Make (struct type elt = info end)
+  module IDSet = Set.Make (U.ID)
+  module S = Algaeff.State.Make (struct type state = IDSet.t end)
 end
 
 open Internal
@@ -13,13 +13,14 @@ exception%effect WarnUnused : info -> unit
 type handler = { warn_unused : info -> unit }
 let perform : handler = { warn_unused = fun info -> Effect.perform (WarnUnused info) }
 
-type id = A.id
-let new_ u = let id = A.insert u in S.modify (IntSet.add id); id
-let use id = S.modify (IntSet.remove id)
+type id = U.id
+let compare_id = U.ID.compare
+let new_ u = let id = U.register u in S.modify (IDSet.add id); id
+let use id = S.modify (IDSet.remove id)
 
 let run f h =
-  A.run @@ fun () -> S.run ~init:IntSet.empty @@ fun () ->
+  U.run @@ fun () -> S.run ~init:IDSet.empty @@ fun () ->
   let ans = f () in
   (* we are not using Fun.protect because exceptions should skip the warnings *)
-  Seq.iter h.warn_unused @@ Seq.map A.select @@ IntSet.to_seq (S.get());
+  Seq.iter h.warn_unused @@ Seq.map U.retrieve @@ IDSet.to_seq (S.get());
   ans

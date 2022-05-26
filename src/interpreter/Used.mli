@@ -1,6 +1,7 @@
 type info = Bantorra.Manager.path Checker.Syntax.node
 
 type id
+val compare_id : id -> id -> int
 
 val new_ : info -> id
 val use : id -> unit
