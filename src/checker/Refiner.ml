@@ -86,7 +86,7 @@ let infer_var p s =
   | Some ({tm; tp}, ()), None -> quote tm, tp
   | Some _, Some _ ->
     Format.eprintf "@[<2>Local@ variable@ %a@ could@ not@ have@ level@ shifting@]@." Syntax.dump_name p;
-    not_inferable ~tm:{node = CS.Var (p, s); info = None}
+    not_inferable ~tm:{node = CS.Var (p, s); loc = None}
   | None, _ ->
     let ulvl = shifted_blessed_ulvl s in
     let tm, tp =

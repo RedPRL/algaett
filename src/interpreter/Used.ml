@@ -1,4 +1,6 @@
-type info = Bantorra.Manager.path Checker.Syntax.node
+type info =
+  | Imported of Bantorra.Manager.path Checker.Syntax.node
+  | Local of Yuujinchou.Trie.path Checker.Syntax.node
 
 module Internal =
 struct

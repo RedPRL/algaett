@@ -7,12 +7,12 @@ let dump_position fmt Lexing.{pos_fname; pos_lnum; pos_bol; pos_cnum} =
 let dump_span fmt {start; stop} =
   Format.fprintf fmt "@[<2>{ start = @[%a@];@ stop = @[%a@]; }@]" dump_position start dump_position stop
 
-type 'a node = {node : 'a; info : span option}
-let dump_node dump fmt {node; info} =
-  match info with
+type 'a node = {node : 'a; loc : span option}
+let dump_node dump fmt {node; loc} =
+  match loc with
   | None -> dump fmt node
-  | Some info ->
-    Format.fprintf fmt "@[<2>{ node = @[%a@];@ info = @[%a@]; }@]" dump node dump_span info
+  | Some loc ->
+    Format.fprintf fmt "@[<2>{ node = @[%a@];@ loc = @[%a@]; }@]" dump node dump_span loc
 
 type name = Yuujinchou.Trie.path
 let dump_name fmt n =

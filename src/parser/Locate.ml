@@ -19,5 +19,5 @@ let located p =
   p |> Earley.apply_position @@ fun i1 c1 i2 c2 x ->
   Checker.Syntax.{
     node = x;
-    info = Some (locate i1 c1 i2 c2);
+    loc = Some (locate i1 c1 i2 c2);
   }

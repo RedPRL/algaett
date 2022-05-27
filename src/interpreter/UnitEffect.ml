@@ -26,17 +26,19 @@ let perform : handler = { load; preload; warn_unused }
 module S = Yuujinchou.Scope.Make
     (struct
       type data = Checker.resolve_data
-      type tag = Used.id option
+      type tag = Used.id
       type hook = Syntax.empty
       type context = Syntax.empty
     end)
 
-let include_singleton (p, data) = S.include_singleton (p, (data, None))
+let include_singleton ?loc (p, data) =
+  let id = Used.new_ (Used.Local {node = p; loc}) in
+  S.include_singleton (p, (data, id))
 let section p = S.section p
 let get_export () = Yuujinchou.Trie.Untagged.untag @@ S.get_export ()
-let import u m =
-  let id = Used.new_ u in
-  let u = S.modify m @@ Yuujinchou.Trie.retag (Some id) @@ load u.node in
+let import ?loc u m =
+  let id = Used.new_ (Imported {node = u; loc}) in
+  let u = S.modify m @@ Yuujinchou.Trie.retag id @@ load u in
   S.import_subtree ([], u)
 
 let run_used f = Used.run f { warn_unused }
@@ -45,7 +47,7 @@ let run_scope f =
   S.run
     (fun () ->
        let ans = f () in
-       Seq.iter (Option.iter Used.use) @@ Yuujinchou.Trie.set_of_tags (Option.compare Used.compare_id) @@ S.get_export ();
+       Seq.iter Used.use @@ Yuujinchou.Trie.set_of_tags Used.compare_id @@ S.get_export ();
        ans)
     { not_found = (fun ?context:_ _ -> ());
       shadow = (fun ?context:_ _ _ y -> y);
@@ -57,7 +59,7 @@ let run_checker f =
         (fun p ->
            match S.resolve p with
            | None -> not_in_scope p
-           | Some (data, tag) -> Option.iter Used.use tag; data) }
+           | Some (data, tag) -> Used.use tag; data) }
 
 let run f h =
   try run_used @@ fun () -> run_scope @@ fun () -> run_checker f with

@@ -7,6 +7,10 @@ type error = UnitEffect.error =
 
 let execute = Driver.execute
 
+type unused_info = Used.info =
+  | Imported of Bantorra.Manager.path Checker.Syntax.node
+  | Local of Yuujinchou.Trie.path Checker.Syntax.node
+
 type handler = UnitEffect.handler =
   { load : Bantorra.Manager.path -> Checker.resolve_data Yuujinchou.Trie.Untagged.t;
     preload : Bantorra.Manager.path -> unit;
