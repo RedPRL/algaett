@@ -11,23 +11,21 @@ dev-repo: "git+https://github.com/RedPRL/algaett.git"
 depends: [
   "dune" {>= "2.0"}
   "ocaml" {>= "5.0"}
-  "algaeff" {>= "0.2.0~dev"}
+  "algaeff" {>= "0.2"}
   "bwd" {>= "1.1"}
   "earley" {>= "3.0"}
   "emoji" {>= "1.2"}
+  "yuujinchou" {>= "3.0"}
   "odoc" {with-doc}
   "bantorra"
   "mugen"
   "ppx_effects"
-  "yuujinchou"
 ]
 pin-depends: [
-  [ "algaeff.0.2.0~dev" "git+https://github.com/RedPRL/algaeff" ]
   [ "bantorra.0.2.0~dev" "git+https://github.com/RedPRL/bantorra" ]
   [ "emoji.1.2.0~pre" "git+https://github.com/fxfactorial/ocaml-emoji" ]
   [ "mugen.0.1.0~dev" "git+https://github.com/RedPRL/mugen" ]
   [ "ppx_effects.0.1.0~dev" "git+https://github.com/favonia/ppx_effects#500" ]
-  [ "yuujinchou.3.0.0~dev" "git+https://github.com/RedPRL/yuujinchou" ]
 ]
 build: [
   ["dune" "build" "-p" name "-j" jobs]

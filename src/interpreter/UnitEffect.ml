@@ -49,9 +49,9 @@ let run_scope f =
        let ans = f () in
        Seq.iter Used.use @@ Yuujinchou.Trie.set_of_tags Used.compare_id @@ S.get_export ();
        ans)
-    { not_found = (fun ?context:_ _ -> ());
-      shadow = (fun ?context:_ _ _ y -> y);
-      hook = (fun ?context:_ _ -> function _ -> .) }
+    { not_found = (fun _ _ -> ());
+      shadow = (fun _ _ _ y -> y);
+      hook = (fun _ _ -> function _ -> .) }
 
 let run_checker f =
   Checker.run f
