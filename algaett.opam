@@ -19,13 +19,11 @@ depends: [
   "odoc" {with-doc}
   "bantorra"
   "mugen"
-  "ppx_effects"
 ]
 pin-depends: [
   [ "bantorra.0.2.0~dev" "git+https://github.com/RedPRL/bantorra" ]
   [ "emoji.1.2.0~pre" "git+https://github.com/fxfactorial/ocaml-emoji" ]
   [ "mugen.0.1.0~dev" "git+https://github.com/RedPRL/mugen" ]
-  [ "ppx_effects.0.1.0~dev" "git+https://github.com/favonia/ppx_effects#500" ]
 ]
 build: [
   ["dune" "build" "-p" name "-j" jobs]

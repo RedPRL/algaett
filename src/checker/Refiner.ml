@@ -28,7 +28,7 @@ type resolve_data =
 
 module Internal =
 struct
-  exception%effect Resolve : Yuujinchou.Trie.path -> resolve_data
+  type _ Effect.t += Resolve : Yuujinchou.Trie.path -> resolve_data Effect.t
   let resolve p = Effect.perform (Resolve p)
 
   type error =
@@ -67,7 +67,7 @@ open Internal
 let elab_shift =
   let open NbE.ULvl.Shift in
   function
-  | CS.Translate i -> trans i
+  | CS.Translate i -> of_int i
 
 let shifted_blessed_ulvl =
   function
@@ -213,6 +213,11 @@ let check_top tm ~tp =
 type handler = { resolve : Yuujinchou.Trie.path -> resolve_data }
 
 let run f h =
-  try f () with [%effect? Resolve p, k] -> Algaeff.Fun.Deep.finally k (fun () -> h.resolve p)
+  Effect.Deep.try_with f ()
+    { effc = fun (type a) (eff : a Effect.t) ->
+          match eff with
+          | Resolve p -> Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
+            Algaeff.Fun.Deep.finally k (fun () -> h.resolve p)
+          | _ -> None }
 
 let perform : handler = { resolve = Internal.resolve }

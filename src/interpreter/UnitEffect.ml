@@ -11,9 +11,10 @@ let reraise_checker =
   | Error (Checker.IllTyped {tm; tp}) -> raise (Error (IllTyped {tm; tp}))
 let not_in_scope n = raise (Error (NotInScope n))
 
-exception%effect Load : Bantorra.Manager.path -> Checker.resolve_data Yuujinchou.Trie.Untagged.t
-exception%effect Preload : Bantorra.Manager.path -> unit
-exception%effect WarnUnused : Used.info -> unit
+type _ Effect.t +=
+  | Load : Bantorra.Manager.path -> Checker.resolve_data Yuujinchou.Trie.Untagged.t Effect.t
+  | Preload : Bantorra.Manager.path -> unit Effect.t
+  | WarnUnused : Used.info -> unit Effect.t
 type handler =
   { load : Bantorra.Manager.path -> Checker.resolve_data Yuujinchou.Trie.Untagged.t;
     preload : Bantorra.Manager.path -> unit;
@@ -62,7 +63,14 @@ let run_checker f =
            | Some (data, tag) -> Used.use tag; data) }
 
 let run f h =
-  try run_used @@ fun () -> run_scope @@ fun () -> run_checker f with
-  | [%effect? Load p, k] -> Algaeff.Fun.Deep.finally k @@ fun () -> h.load p
-  | [%effect? Preload p, k] -> Algaeff.Fun.Deep.finally k @@ fun () -> h.preload p
-  | [%effect? WarnUnused i, k] -> Algaeff.Fun.Deep.finally k @@ fun () -> h.warn_unused i
+  Effect.Deep.try_with
+    run_used (fun () -> run_scope @@ fun () -> run_checker f)
+    { effc = fun (type a) (eff : a Effect.t) ->
+          match eff with
+          | Load p -> Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
+            Algaeff.Fun.Deep.finally k @@ fun () -> h.load p
+          | Preload p -> Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
+            Algaeff.Fun.Deep.finally k @@ fun () -> h.preload p
+          | WarnUnused i -> Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
+            Algaeff.Fun.Deep.finally k @@ fun () -> h.warn_unused i
+          | _ -> None }

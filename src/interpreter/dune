@@ -1,5 +1,4 @@
 (library
  (name Interpreter)
- (preprocess (pps ppx_effects))
  (libraries bwd algaeff bantorra yuujinchou algaett.nbe algaett.checker)
  (public_name algaett.interpreter))

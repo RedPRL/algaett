@@ -1,6 +1,6 @@
 open Bwd
 
-module ULvlShift = Mugen.Shift.Trans
+module ULvlShift = Mugen.Shift.Int
 
 type global = Bantorra.Manager.path * int
 

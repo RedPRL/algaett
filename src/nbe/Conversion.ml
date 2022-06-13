@@ -46,9 +46,9 @@ let equate_cut_hd h1 h2 =
 
 let equate_ulvl' l1 dir l2 =
   if (match dir with
-      | `GE -> ULvl.ge
+      | `GE -> ULvl.geq
       | `EQ -> ULvl.equal
-      | `LE -> ULvl.le)
+      | `LE -> ULvl.leq)
       (ULvl.of_con l1) (ULvl.of_con l2)
   then () else raise Unequal
 

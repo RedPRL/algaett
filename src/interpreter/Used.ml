@@ -11,7 +11,7 @@ end
 
 open Internal
 
-exception%effect WarnUnused : info -> unit
+type _ Effect.t += WarnUnused : info -> unit Effect.t
 type handler = { warn_unused : info -> unit }
 let perform : handler = { warn_unused = fun info -> Effect.perform (WarnUnused info) }
 
