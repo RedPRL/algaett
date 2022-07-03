@@ -113,47 +113,56 @@ type check = tp:D.con -> S.t
 (* The beginnings of a refiner *)
 module Infer : sig
   val ann : ctp:check -> ctm:check -> infer
+  val app : itm:infer -> ctm:check -> infer
+  val fst : itm:infer -> infer
+  val snd : itm:infer -> infer
 end =
 struct
-  let ann ~ctp ~ctm : infer =
-    fun () ->
-      let tp = eval @@ ctp ~tp:D.univ_top in
-      ctm ~tp, tp
+
+  let ann ~ctp ~ctm : infer = fun () ->
+    let tp = eval @@ ctp ~tp:D.univ_top in
+    ctm ~tp, tp
+
+  let app ~itm ~ctm : infer = fun () ->
+    let fn, fn_tp = itm () in
+    match NbE.force_all fn_tp with
+    | D.Pi (base, fam) | D.VirPi (base, fam) ->
+      let arg = ctm ~tp:base in
+      let fib = NbE.inst_clo fam @@ lazy_eval arg in
+      S.app fn arg, fib
+    | _ ->
+      invalid_arg "app"
+
+  let fst ~itm : infer = fun () ->
+    let tm, tp = itm () in
+    match NbE.force_all tp with
+    | D.Sigma (base, _) ->
+      S.fst tm, base
+    | _ ->
+      invalid_arg "fst"
+
+  let snd ~itm : infer = fun () ->
+    let tm, tp = itm () in
+    match NbE.force_all tp with
+    | D.Sigma (_, fam) ->
+      let tp = NbE.inst_clo fam @@ lazy_eval @@ S.fst tm in
+      S.snd tm, tp
+    | _ ->
+      invalid_arg "snd"
+
 end
 
-let rec infer tm : infer =
-  fun () ->
+let rec infer tm : infer = fun () ->
   match tm.CS.node with
+  | CS.Var (p, s) -> infer_var p s
   | CS.Ann {tm; tp} ->
     Infer.ann ~ctp:(check tp) ~ctm:(check tm) ()
-  | CS.Var (p, s) -> infer_var p s
   | CS.App (tm1, tm2) ->
-    begin
-      let tm1, tp1 = infer tm1 () in
-      match NbE.force_all tp1 with
-      | D.Pi (base, fam) | D.VirPi (base, fam) ->
-        let tm2 = check ~tp:base tm2 in
-        let tp = NbE.inst_clo fam @@ lazy_eval tm2 in
-        S.app tm1 tm2, tp
-      | _ -> invalid_arg "infer"
-    end
+    Infer.app ~itm:(infer tm1) ~ctm:(check tm2) ()
   | CS.Fst tm ->
-    begin
-      let tm, tp = infer tm () in
-      match NbE.force_all tp with
-      | D.Sigma (base, _) ->
-        S.fst tm, base
-      | _ -> invalid_arg "infer"
-    end
+    Infer.fst ~itm:(infer tm) ()
   | CS.Snd tm ->
-    begin
-      let tm, tp = infer tm () in
-      match NbE.force_all tp with
-      | D.Sigma (_, fam) ->
-        let tp = NbE.inst_clo fam @@ lazy_eval @@ S.fst tm in
-        S.snd tm, tp
-      | _ -> invalid_arg "infer"
-    end
+    Infer.snd ~itm:(infer tm) ()
   | _ ->
     (* Format.eprintf "@[<2>Could@ not@ infer@ the@ type@ of@ %a@]@." Syntax.dump tm; *)
     not_inferable ~tm
