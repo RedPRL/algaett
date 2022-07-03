@@ -60,15 +60,20 @@ struct
 
   let bind ~name ~tp f =
     let arg = D.lvl (Eff.read()).size in
-    Eff.scope (fun env ->
-        {blessed_ulvl = env.blessed_ulvl;
-         size = env.size + 1;
-         locals = env.locals #< (Lazy.from_val arg);
-         local_names =
-           match name with
-           | None -> env.local_names
-           | Some name -> Yuujinchou.Trie.update_singleton name (fun _ -> Some ({tm = arg; tp}, ())) env.local_names})
-    @@ fun () -> f arg
+    let update env =
+      {blessed_ulvl = env.blessed_ulvl;
+       size = env.size + 1;
+       locals = env.locals #< (Lazy.from_val arg);
+       local_names =
+         match name with
+         | None -> env.local_names
+         | Some name ->
+           Yuujinchou.Trie.update_singleton
+             name
+             (fun _ -> Some ({tm = arg; tp}, ()))
+             env.local_names}
+    in
+    Eff.scope update @@ fun () -> f arg
 
   let blessed_ulvl () = (Eff.read()).blessed_ulvl
 end
@@ -171,7 +176,7 @@ let rec infer tm : infer = fun () ->
    we try to check things without unfolding the type, and then we unfold the type
    if type inference also fails. During the second round, we do not want to try
    the type inference again becouse it will have already failed once. *)
-and check ?(fallback_infer=true) tm ~tp  =
+and check ?(fallback_infer=true) tm : check = fun ~tp ->
   match tm.CS.node, tp with
   | CS.Pi (base, name, fam), D.Univ _ ->
     let base = check ~tp base in
