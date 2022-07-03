@@ -19,6 +19,7 @@ depends: [
   "odoc" {with-doc}
   "bantorra"
   "mugen"
+  "cmdliner"
 ]
 pin-depends: [
   [ "bantorra.0.2.0~dev" "git+https://github.com/RedPRL/bantorra" ]
