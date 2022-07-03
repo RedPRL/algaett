@@ -15,5 +15,7 @@ type handler = UnitEffect.handler =
   { load : Bantorra.Manager.path -> Checker.resolve_data Yuujinchou.Trie.Untagged.t;
     preload : Bantorra.Manager.path -> unit;
     warn_unused : Used.info -> unit }
+
 let run = UnitEffect.run
+
 let perform = UnitEffect.perform

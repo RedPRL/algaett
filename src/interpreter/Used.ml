@@ -12,12 +12,17 @@ end
 open Internal
 
 type _ Effect.t += WarnUnused : info -> unit Effect.t
+
 type handler = { warn_unused : info -> unit }
+
 let perform : handler = { warn_unused = fun info -> Effect.perform (WarnUnused info) }
 
 type id = U.id
+
 let compare_id = U.ID.compare
+
 let new_ u = let id = U.register u in S.modify (IDSet.add id); id
+
 let use id = S.modify (IDSet.remove id)
 
 let run f h =

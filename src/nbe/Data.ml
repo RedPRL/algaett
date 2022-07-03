@@ -21,8 +21,11 @@ type syn =
   | TpULvl
   | ULvl of (ULvlShift.t, syn) Mugen.Syntax.endo
   | VirUniv
+
 and env = value Lazy.t bwd (* invariant: lazy values must be effect-less *)
+
 and closure = Clo of {body : syn; env : env}
+
 and value =
   | Cut of cut
   | Unfold of unfold
@@ -35,13 +38,18 @@ and value =
   | TpULvl
   | ULvl of (ULvlShift.t, value) Mugen.Syntax.endo
   | VirUniv
+
 and cut = cut_head * frame bwd
+
 and unfold = unfold_head * frame bwd * value Lazy.t (* invariant: lazy values must be effect-less *)
+
 and cut_head =
   | Lvl of int
   | Axiom of Yuujinchou.Trie.path
+
 and unfold_head =
   | Def of Yuujinchou.Trie.path * value Lazy.t
+
 and frame =
   | App of value
   | Fst

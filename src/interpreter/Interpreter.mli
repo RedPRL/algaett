@@ -15,5 +15,6 @@ type handler =
   { load : Bantorra.Manager.path -> Checker.resolve_data Yuujinchou.Trie.Untagged.t;
     preload : Bantorra.Manager.path -> unit;
     warn_unused : unused_info -> unit }
+
 val run : (unit -> 'a) -> handler -> 'a
 val perform : handler

@@ -29,25 +29,35 @@ type resolve_data =
 module Internal =
 struct
   type _ Effect.t += Resolve : Yuujinchou.Trie.path -> resolve_data Effect.t
+
   let resolve p = Effect.perform (Resolve p)
 
   type error =
     | NotInferable of {tm: Syntax.t}
     | IllTyped of {tm: Syntax.t; tp: D.t}
+
   exception Error of error
+
   let not_inferable ~tm = raise (Error (NotInferable {tm}))
+
   let ill_typed ~tm ~tp = raise (Error (IllTyped {tm; tp}))
+
   let trap f = try Result.ok (f ()) with Error e -> Result.error e
 
   module Eff = Algaeff.Reader.Make (struct type nonrec env = env end)
   (* invariant: the return values must be effect-less *)
   let eval tm = NbE.eval ~env:(Eff.read()).locals tm
+
   let lazy_eval tm =
     let env = (Eff.read()).locals in
     lazy begin NbE.eval ~env tm end
+
   let quote v = NbE.quote ~size:(Eff.read()).size v
+
   let equate v = NbE.equate ~size:(Eff.read()).size v
+
   let resolve_local p = Yuujinchou.Trie.find_singleton p (Eff.read()).local_names
+
   let bind ~name ~tp f =
     let arg = D.lvl (Eff.read()).size in
     Eff.scope (fun env ->
@@ -59,6 +69,7 @@ struct
            | None -> env.local_names
            | Some name -> Yuujinchou.Trie.update_singleton name (fun _ -> Some ({tm = arg; tp}, ())) env.local_names})
     @@ fun () -> f arg
+
   let blessed_ulvl () = (Eff.read()).blessed_ulvl
 end
 
@@ -194,6 +205,7 @@ and check ?(fallback_infer=true) tm ~tp  =
 type error = Internal.error =
   | NotInferable of {tm: Syntax.t}
   | IllTyped of {tm: Syntax.t; tp: D.t}
+
 let infer_top tm =
   trap @@ fun () ->
   let tm, tp =
@@ -201,10 +213,12 @@ let infer_top tm =
     let tm, tp = infer tm in tm, quote tp
   in
   S.lam tm, NbE.eval_top (S.vir_pi S.tp_ulvl tp)
+
 let check_tp_top tp =
   trap @@ fun () ->
   let tp = Eff.run ~env:top_env @@ fun () -> check tp ~tp:D.univ_top in
   S.vir_pi S.tp_ulvl tp
+
 let check_top tm ~tp =
   trap @@ fun () ->
   let tm = Eff.run ~env:top_env @@ fun () -> check tm ~tp:(app_ulvl tp @@ blessed_ulvl()) in
