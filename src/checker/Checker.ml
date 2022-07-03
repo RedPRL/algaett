@@ -1,3 +1,3 @@
 module Syntax = Syntax
 
-include Refiner
+include Elaborator
