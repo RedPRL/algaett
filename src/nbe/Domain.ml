@@ -19,7 +19,7 @@ type con = Data.value =
   | ULvl of (Data.ULvlShift.t, con) Mugen.Syntax.endo
   | VirUniv
 
-  type cut = Data.cut
+type cut = Data.cut
 
 type unfold = Data.unfold
 

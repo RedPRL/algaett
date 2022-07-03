@@ -92,7 +92,7 @@ let app_ulvl tp ulvl =
     NbE.inst_clo' fam ulvl
   | _ -> invalid_arg "app_ulvl"
 
-let infer_var p s =
+let infer_var (p : CS.name) (s : CS.shift list option) =
   match resolve_local p, s with
   | Some ({tm; tp}, ()), None -> quote tm, tp
   | Some _, Some _ ->
@@ -107,15 +107,29 @@ let infer_var p s =
     in
     S.app tm (quote ulvl), app_ulvl tp ulvl
 
-let rec infer tm =
+type infer = unit -> S.t * D.con
+type check = tp:D.con -> S.t
+
+(* The beginnings of a refiner *)
+module Infer : sig
+  val ann : ctp:check -> ctm:check -> infer
+end =
+struct
+  let ann ~ctp ~ctm : infer =
+    fun () ->
+      let tp = eval @@ ctp ~tp:D.univ_top in
+      ctm ~tp, tp
+end
+
+let rec infer tm : infer =
+  fun () ->
   match tm.CS.node with
   | CS.Ann {tm; tp} ->
-    let tp = eval @@ check ~tp:D.univ_top tp in
-    check ~tp tm, tp
+    Infer.ann ~ctp:(check tp) ~ctm:(check tm) ()
   | CS.Var (p, s) -> infer_var p s
   | CS.App (tm1, tm2) ->
     begin
-      let tm1, tp1 = infer tm1 in
+      let tm1, tp1 = infer tm1 () in
       match NbE.force_all tp1 with
       | D.Pi (base, fam) | D.VirPi (base, fam) ->
         let tm2 = check ~tp:base tm2 in
@@ -125,7 +139,7 @@ let rec infer tm =
     end
   | CS.Fst tm ->
     begin
-      let tm, tp = infer tm in
+      let tm, tp = infer tm () in
       match NbE.force_all tp with
       | D.Sigma (base, _) ->
         S.fst tm, base
@@ -133,7 +147,7 @@ let rec infer tm =
     end
   | CS.Snd tm ->
     begin
-      let tm, tp = infer tm in
+      let tm, tp = infer tm () in
       match NbE.force_all tp with
       | D.Sigma (_, fam) ->
         let tp = NbE.inst_clo fam @@ lazy_eval @@ S.fst tm in
@@ -185,7 +199,7 @@ and check ?(fallback_infer=true) tm ~tp  =
   | _ ->
     if fallback_infer then
       try
-        match infer tm with
+        match infer tm () with
         | tm', tp' ->
           begin
             try equate tp' `LE tp; tm' with
@@ -210,7 +224,7 @@ let infer_top tm =
   trap @@ fun () ->
   let tm, tp =
     Eff.run ~env:top_env @@ fun () ->
-    let tm, tp = infer tm in tm, quote tp
+    let tm, tp = infer tm () in tm, quote tp
   in
   S.lam tm, NbE.eval_top (S.vir_pi S.tp_ulvl tp)
 
