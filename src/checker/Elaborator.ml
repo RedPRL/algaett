@@ -127,6 +127,7 @@ end
 
 module Quantifier : sig
   val quantifier : name:CS.bound_name -> cbase:check -> cfam:check binder -> (S.t -> S.t -> S.t) -> check
+  val vir_quantifier : name:CS.bound_name -> cbase:check -> cfam:check binder -> (S.t -> S.t -> S.t) -> check
 end =
 struct
   let quantifier ~name ~cbase ~cfam syn : check = fun ~tp ->
@@ -137,10 +138,21 @@ struct
       syn base fam
     | _ ->
       invalid_arg "quantifier"
+
+  let vir_quantifier ~name ~cbase ~cfam syn : check = fun ~tp ->
+    match tp with
+    | D.Univ _ ->
+      let base = cbase ~tp:D.VirUniv in
+      let fam = bind ~name ~tp:(eval base) @@ fun x -> cfam x ~tp in
+      syn base fam
+    | _ ->
+      invalid_arg "quantifier"
+
 end
 
 module Sigma : sig
   val sigma : name:CS.bound_name -> cbase:check -> cfam:check binder -> check
+  val pair : cfst:check -> csnd:check -> check
   val fst : itm:infer -> infer
   val snd : itm:infer -> infer
 end =
@@ -148,6 +160,16 @@ struct
 
   let sigma ~name ~cbase ~cfam : check =
     Quantifier.quantifier ~name ~cbase ~cfam S.sigma
+
+  let pair ~cfst ~csnd : check = fun ~tp ->
+    match tp with
+    | D.Sigma (base, fam) ->
+      let tm1 = cfst ~tp:base in
+      let tp2 = NbE.inst_clo fam @@ lazy_eval tm1 in
+      let tm2 = csnd ~tp:tp2 in
+      S.pair tm1 tm2
+    | _ ->
+      invalid_arg "pair"
 
   let fst ~itm : infer = fun () ->
     let tm, tp = itm () in
@@ -170,6 +192,7 @@ end
 
 module Pi : sig
   val pi : name:CS.bound_name -> cbase:check -> cfam:check binder -> check
+  val vir_pi : name:CS.bound_name -> cbase:check -> cfam:check binder -> check
   val lam : name:CS.bound_name -> cbnd:check binder -> check
   val app : itm:infer -> ctm:check -> infer
 end =
@@ -177,6 +200,9 @@ struct
 
   let pi ~name ~cbase ~cfam : check =
     Quantifier.quantifier ~name ~cbase ~cfam S.pi
+
+  let vir_pi ~name ~cbase ~cfam : check =
+    Quantifier.vir_quantifier ~name ~cbase ~cfam S.pi
 
   let lam ~name ~cbnd : check = fun ~tp ->
     match tp with
@@ -222,15 +248,14 @@ and check ?(fallback_infer=true) tm : check = fun ~tp ->
   match tm.CS.node, tp with
   | CS.Pi (base, name, fam), _ ->
     Pi.pi ~name ~cbase:(check base) ~cfam:(fun _ -> check fam) ~tp
+  | CS.VirPi (base, name, fam), _ ->
+    Pi.vir_pi ~name ~cbase:(check base) ~cfam:(fun _ -> check fam) ~tp
   | CS.Sigma (base, name, fam), _ ->
     Sigma.sigma ~name ~cbase:(check base) ~cfam:(fun _ -> check fam) ~tp
   | CS.Lam (name, body), _ ->
     Pi.lam ~name ~cbnd:(fun _ -> check body) ~tp
-  | CS.Pair (tm1, tm2), D.Sigma (base, fam) ->
-    let tm1 = check ~tp:base tm1 in
-    let tp2 = NbE.inst_clo fam @@ lazy_eval tm1 in
-    let tm2 = check ~tp:tp2 tm2 in
-    S.pair tm1 tm2
+  | CS.Pair (tm1, tm2), _ ->
+    Sigma.pair ~cfst:(check tm1) ~csnd:(check tm2) ~tp
   | CS.Univ s, D.Univ large ->
     let vsmall = shifted_blessed_ulvl s in
     if UL.(<) (UL.of_con vsmall) (UL.of_con large)
@@ -241,11 +266,6 @@ and check ?(fallback_infer=true) tm : check = fun ~tp ->
         (Mugen.Syntax.Free.dump NbE.ULvl.Shift.dump Format.pp_print_int) (UL.of_con large);
       ill_typed ~tm ~tp
     end
-  | CS.VirPi (base, name, fam), D.Univ _ ->
-    let base = check ~tp:D.vir_univ base in
-    let fam = bind ~name ~tp:(eval base) @@ fun _ -> check ~tp fam
-    in
-    S.pi base fam
   | _ ->
     if fallback_infer then
       try
