@@ -115,28 +115,38 @@ let infer_var (p : CS.name) (s : CS.shift list option) =
 type infer = unit -> S.t * D.con
 type check = tp:D.con -> S.t
 
-(* The beginnings of a refiner *)
-module Infer : sig
+module Structural : sig
   val ann : ctp:check -> ctm:check -> infer
-  val app : itm:infer -> ctm:check -> infer
+end =
+struct
+  let ann ~ctp ~ctm : infer = fun () ->
+    let tp = eval @@ ctp ~tp:D.univ_top in
+    ctm ~tp, tp
+end
+
+module Quantifier : sig
+  val quantifier : name:CS.bound_name -> cbase:check -> cfam:(D.t -> check) -> (S.t -> S.t -> S.t) -> check
+end =
+struct
+  let quantifier ~name ~cbase ~cfam syn : check = fun ~tp ->
+    match tp with
+    | D.Univ _ ->
+      let base = cbase ~tp in
+      let fam = bind ~name ~tp:(eval base) @@ fun x -> cfam x ~tp in
+      syn base fam
+    | _ ->
+      invalid_arg "quantifier"
+end
+
+module Sigma : sig
+  val sigma : name:CS.bound_name -> cbase:check -> cfam:(D.t -> check) -> check
   val fst : itm:infer -> infer
   val snd : itm:infer -> infer
 end =
 struct
 
-  let ann ~ctp ~ctm : infer = fun () ->
-    let tp = eval @@ ctp ~tp:D.univ_top in
-    ctm ~tp, tp
-
-  let app ~itm ~ctm : infer = fun () ->
-    let fn, fn_tp = itm () in
-    match NbE.force_all fn_tp with
-    | D.Pi (base, fam) | D.VirPi (base, fam) ->
-      let arg = ctm ~tp:base in
-      let fib = NbE.inst_clo fam @@ lazy_eval arg in
-      S.app fn arg, fib
-    | _ ->
-      invalid_arg "app"
+  let sigma ~name ~cbase ~cfam : check =
+    Quantifier.quantifier ~name ~cbase ~cfam S.sigma
 
   let fst ~itm : infer = fun () ->
     let tm, tp = itm () in
@@ -157,17 +167,39 @@ struct
 
 end
 
+module Pi : sig
+  val pi : name:CS.bound_name -> cbase:check -> cfam:(D.t -> check) -> check
+  val app : itm:infer -> ctm:check -> infer
+end =
+struct
+
+  let pi ~name ~cbase ~cfam : check =
+    Quantifier.quantifier ~name ~cbase ~cfam S.pi
+
+  let app ~itm ~ctm : infer = fun () ->
+    let fn, fn_tp = itm () in
+    match NbE.force_all fn_tp with
+    | D.Pi (base, fam) | D.VirPi (base, fam) ->
+      let arg = ctm ~tp:base in
+      let fib = NbE.inst_clo fam @@ lazy_eval arg in
+      S.app fn arg, fib
+    | _ ->
+      invalid_arg "app"
+
+end
+
 let rec infer tm : infer = fun () ->
   match tm.CS.node with
-  | CS.Var (p, s) -> infer_var p s
+  | CS.Var (p, s) ->
+    infer_var p s
   | CS.Ann {tm; tp} ->
-    Infer.ann ~ctp:(check tp) ~ctm:(check tm) ()
+    Structural.ann ~ctp:(check tp) ~ctm:(check tm) ()
   | CS.App (tm1, tm2) ->
-    Infer.app ~itm:(infer tm1) ~ctm:(check tm2) ()
+    Pi.app ~itm:(infer tm1) ~ctm:(check tm2) ()
   | CS.Fst tm ->
-    Infer.fst ~itm:(infer tm) ()
+    Sigma.fst ~itm:(infer tm) ()
   | CS.Snd tm ->
-    Infer.snd ~itm:(infer tm) ()
+    Sigma.snd ~itm:(infer tm) ()
   | _ ->
     (* Format.eprintf "@[<2>Could@ not@ infer@ the@ type@ of@ %a@]@." Syntax.dump tm; *)
     not_inferable ~tm
@@ -178,18 +210,12 @@ let rec infer tm : infer = fun () ->
    the type inference again becouse it will have already failed once. *)
 and check ?(fallback_infer=true) tm : check = fun ~tp ->
   match tm.CS.node, tp with
-  | CS.Pi (base, name, fam), D.Univ _ ->
-    let base = check ~tp base in
-    let fam = bind ~name ~tp:(eval base) @@ fun _ -> check ~tp fam
-    in
-    S.pi base fam
+  | CS.Pi (base, name, fam), _ ->
+    Pi.pi ~name ~cbase:(check base) ~cfam:(fun _ -> check fam) ~tp
+  | CS.Sigma (base, name, fam), _ ->
+    Sigma.sigma ~name ~cbase:(check base) ~cfam:(fun _ -> check fam) ~tp
   | CS.Lam (name, body), (D.Pi (base, fam) | D.VirPi (base, fam)) ->
     bind ~name ~tp:base @@ fun arg -> S.lam @@ check ~tp:(NbE.inst_clo' fam arg) body
-  | CS.Sigma (base, name, fam), D.Univ _ ->
-    let base = check ~tp base in
-    let fam = bind ~name ~tp:(eval base) @@ fun _ -> check ~tp fam
-    in
-    S.sigma base fam
   | CS.Pair (tm1, tm2), D.Sigma (base, fam) ->
     let tm1 = check ~tp:base tm1 in
     let tp2 = NbE.inst_clo fam @@ lazy_eval tm1 in
