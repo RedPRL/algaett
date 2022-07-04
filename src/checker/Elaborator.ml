@@ -112,8 +112,9 @@ let infer_var (p : CS.name) (s : CS.shift list option) =
     in
     S.app tm (quote ulvl), app_ulvl tp ulvl
 
-type infer = unit -> S.t * D.con
-type check = tp:D.con -> S.t
+type infer = unit -> S.t * D.t
+type check = tp:D.t -> S.t
+type 'a binder = D.t -> 'a
 
 module Structural : sig
   val ann : ctp:check -> ctm:check -> infer
@@ -125,7 +126,7 @@ struct
 end
 
 module Quantifier : sig
-  val quantifier : name:CS.bound_name -> cbase:check -> cfam:(D.t -> check) -> (S.t -> S.t -> S.t) -> check
+  val quantifier : name:CS.bound_name -> cbase:check -> cfam:check binder -> (S.t -> S.t -> S.t) -> check
 end =
 struct
   let quantifier ~name ~cbase ~cfam syn : check = fun ~tp ->
@@ -139,7 +140,7 @@ struct
 end
 
 module Sigma : sig
-  val sigma : name:CS.bound_name -> cbase:check -> cfam:(D.t -> check) -> check
+  val sigma : name:CS.bound_name -> cbase:check -> cfam:check binder -> check
   val fst : itm:infer -> infer
   val snd : itm:infer -> infer
 end =
@@ -168,13 +169,22 @@ struct
 end
 
 module Pi : sig
-  val pi : name:CS.bound_name -> cbase:check -> cfam:(D.t -> check) -> check
+  val pi : name:CS.bound_name -> cbase:check -> cfam:check binder -> check
+  val lam : name:CS.bound_name -> cbnd:check binder -> check
   val app : itm:infer -> ctm:check -> infer
 end =
 struct
 
   let pi ~name ~cbase ~cfam : check =
     Quantifier.quantifier ~name ~cbase ~cfam S.pi
+
+  let lam ~name ~cbnd : check = fun ~tp ->
+    match tp with
+    | D.Pi (base, fam) | D.VirPi (base, fam) ->
+      bind ~name ~tp:base @@ fun arg ->
+      S.lam @@ cbnd arg ~tp:(NbE.inst_clo' fam arg)
+    | _ ->
+      failwith ""
 
   let app ~itm ~ctm : infer = fun () ->
     let fn, fn_tp = itm () in
@@ -214,8 +224,8 @@ and check ?(fallback_infer=true) tm : check = fun ~tp ->
     Pi.pi ~name ~cbase:(check base) ~cfam:(fun _ -> check fam) ~tp
   | CS.Sigma (base, name, fam), _ ->
     Sigma.sigma ~name ~cbase:(check base) ~cfam:(fun _ -> check fam) ~tp
-  | CS.Lam (name, body), (D.Pi (base, fam) | D.VirPi (base, fam)) ->
-    bind ~name ~tp:base @@ fun arg -> S.lam @@ check ~tp:(NbE.inst_clo' fam arg) body
+  | CS.Lam (name, body), _ ->
+    Pi.lam ~name ~cbnd:(fun _ -> check body) ~tp
   | CS.Pair (tm1, tm2), D.Sigma (base, fam) ->
     let tm1 = check ~tp:base tm1 in
     let tp2 = NbE.inst_clo fam @@ lazy_eval tm1 in
