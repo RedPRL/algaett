@@ -127,7 +127,7 @@ struct
       let fib = NbE.inst_clo' fam @@ Hyp.tm arg in
       S.lam @@ R.Check.run ~tp:fib @@ cbnd arg
     | _ ->
-      failwith ""
+    invalid_arg "lam"
 
   let app ~itm ~ctm : R.infer =
     R.Infer.rule @@ fun () ->
