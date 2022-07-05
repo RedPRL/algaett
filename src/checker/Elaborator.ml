@@ -80,12 +80,11 @@ end
 
 open Internal
 
-let elab_shift =
-  let open NbE.ULvl.Shift in
+let elab_shift : Syntax.shift -> UL.Shift.t =
   function
-  | CS.Translate i -> of_int i
+  | CS.Translate i -> NbE.ULvl.Shift.of_int i
 
-let shifted_blessed_ulvl =
+let shifted_blessed_ulvl : Syntax.shift list option -> D.t =
   function
   | None -> blessed_ulvl ()
   | Some ss ->
@@ -224,6 +223,27 @@ struct
 
 end
 
+module Univ : sig
+  val univ : Syntax.shift list option -> check
+end =
+struct
+  let univ s ~tp =
+    match tp with
+    | D.Univ large ->
+      let vsmall = shifted_blessed_ulvl s in
+      if UL.(<) (UL.of_con vsmall) (UL.of_con large)
+      then S.univ (quote vsmall)
+      else begin
+        let pp_lvl = Mugen.Syntax.Free.dump NbE.ULvl.Shift.dump Format.pp_print_int in
+        Format.eprintf "@[<2>Universe@ level@ %a@ is@ not@ smaller@ than@ %a@]@."
+          pp_lvl (UL.of_con vsmall)
+          pp_lvl (UL.of_con large);
+        invalid_arg "univ"
+      end
+    | _ ->
+      invalid_arg "univ"
+end
+
 let rec infer tm : infer = fun () ->
   match tm.CS.node with
   | CS.Var (p, s) ->
@@ -245,29 +265,21 @@ let rec infer tm : infer = fun () ->
    if type inference also fails. During the second round, we do not want to try
    the type inference again becouse it will have already failed once. *)
 and check ?(fallback_infer=true) tm : check = fun ~tp ->
-  match tm.CS.node, tp with
-  | CS.Pi (base, name, fam), _ ->
+  match tm.CS.node with
+  | CS.Pi (base, name, fam) ->
     Pi.pi ~name ~cbase:(check base) ~cfam:(fun _ -> check fam) ~tp
-  | CS.VirPi (base, name, fam), _ ->
+  | CS.VirPi (base, name, fam) ->
     Pi.vir_pi ~name ~cbase:(check base) ~cfam:(fun _ -> check fam) ~tp
-  | CS.Sigma (base, name, fam), _ ->
+  | CS.Sigma (base, name, fam) ->
     Sigma.sigma ~name ~cbase:(check base) ~cfam:(fun _ -> check fam) ~tp
-  | CS.Lam (name, body), _ ->
+  | CS.Lam (name, body) ->
     Pi.lam ~name ~cbnd:(fun _ -> check body) ~tp
-  | CS.Pair (tm1, tm2), _ ->
+  | CS.Pair (tm1, tm2) ->
     Sigma.pair ~cfst:(check tm1) ~csnd:(check tm2) ~tp
-  | CS.Univ s, D.Univ large ->
-    let vsmall = shifted_blessed_ulvl s in
-    if UL.(<) (UL.of_con vsmall) (UL.of_con large)
-    then S.univ (quote vsmall)
-    else begin
-      Format.eprintf "@[<2>Universe@ level@ %a@ is@ not@ smaller@ than@ %a@]@."
-        (Mugen.Syntax.Free.dump NbE.ULvl.Shift.dump Format.pp_print_int) (UL.of_con vsmall)
-        (Mugen.Syntax.Free.dump NbE.ULvl.Shift.dump Format.pp_print_int) (UL.of_con large);
-      ill_typed ~tm ~tp
-    end
-  | _ ->
-    if fallback_infer then
+  | CS.Univ s ->
+    Univ.univ s ~tp
+  | _ when fallback_infer ->
+    begin
       try
         match infer tm () with
         | tm', tp' ->
@@ -281,8 +293,9 @@ and check ?(fallback_infer=true) tm : check = fun ~tp ->
         check ~fallback_infer:false tm ~tp:(NbE.force_all tp)
       | _ ->
         ill_typed ~tm ~tp
-    else
-      ill_typed ~tm ~tp
+    end
+  | _ ->
+    ill_typed ~tm ~tp
 
 (* the public interface *)
 
@@ -312,7 +325,8 @@ type handler = { resolve : Yuujinchou.Trie.path -> resolve_data }
 
 let run f h =
   Effect.Deep.try_with f ()
-    { effc = fun (type a) (eff : a Effect.t) ->
+    { effc =
+        fun (type a) (eff : a Effect.t) ->
           match eff with
           | Resolve p -> Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
             Algaeff.Fun.Deep.finally k (fun () -> h.resolve p)
