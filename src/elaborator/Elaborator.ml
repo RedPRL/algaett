@@ -6,6 +6,7 @@ module UL = NbE.ULvl
 module Syntax = CS
 module Errors = Errors
 module ResolveData = ResolveData
+module LHS = LHS
 
 module R = Refiner
 
@@ -80,29 +81,29 @@ and check ?(fallback_infer=true) tm : Rule.check =
 
 (* the public interface *)
 
-let infer_top tm =
+let infer_top lhs tm =
   RefineEffect.trap @@ fun () ->
   let tm, tp =
     RefineEffect.with_top_env @@ fun () ->
-    let tm, tp = Rule.Infer.run {lhs = LHS.unknown} @@ infer tm in
+    let tm, tp = Rule.Infer.run {lhs} @@ infer tm in
     tm, RefineEffect.quote tp
   in
   S.lam tm, NbE.eval_top (S.vir_pi S.tp_ulvl tp)
 
-let check_tp_top tp =
+let check_tp_top lhs tp =
   RefineEffect.trap @@ fun () ->
   let tp =
     RefineEffect.with_top_env @@ fun () ->
-    Rule.Check.run {tp = D.univ_top; lhs = LHS.unknown} @@ check tp
+    Rule.Check.run {tp = D.univ_top; lhs} @@ check tp
   in
   S.vir_pi S.tp_ulvl tp
 
-let check_top tm ~tp =
+let check_top lhs tm ~tp =
   RefineEffect.trap @@ fun () ->
   S.lam @@
   RefineEffect.with_top_env @@ fun () ->
   let ulvl = Rule.Shift.run @@ R.Shift.base in
-  Rule.Check.run {tp = NbE.app_ulvl ~tp ~ulvl; lhs = LHS.unknown} @@ check tm
+  Rule.Check.run {tp = NbE.app_ulvl ~tp ~ulvl; lhs} @@ check tm
 
 type handler = RefineEffect.handler = { resolve : CS.name -> ResolveData.t }
 let run = RefineEffect.run
