@@ -50,7 +50,7 @@ struct
   let shifted t i = fun () ->
     D.ULvl.shifted (t ()) (NbE.ULvl.Shift.of_int i)
 
-  let blessed = RefineEffect.blessed_ulvl
+  let base = RefineEffect.blessed_ulvl
 end
 
 module Structural = struct

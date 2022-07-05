@@ -24,7 +24,7 @@ end
 module Shift :
 sig
   type t = shift
-  val blessed : t
+  val base : t
   val shifted : t -> int -> t
   val run : t -> NbE.Domain.t
 end

@@ -12,12 +12,12 @@ module R = Refiner
 let check_shift (s : CS.shift list option) : R.shift =
   match s with
   | None ->
-    R.Shift.blessed
+    R.Shift.base
   | Some ss ->
     List.fold_right
       (fun (CS.Translate i) l -> R.Shift.shifted l i)
       ss
-      R.Shift.blessed
+      R.Shift.base
 
 let infer_var p s : R.infer =
   match RefineEffect.resolve_local p, s with
