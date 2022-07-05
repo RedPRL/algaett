@@ -37,7 +37,6 @@ let top_env = {
 
 module Eff = Algaeff.Reader.Make (struct type nonrec env = env end)
 
-let with_env env = Eff.run ~env
 let with_top_env f = Eff.run ~env:top_env f
 
 let eval tm = NbE.eval ~env:(Eff.read()).locals tm

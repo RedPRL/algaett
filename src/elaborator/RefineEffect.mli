@@ -23,7 +23,6 @@ val quote : NbE.Domain.t -> NbE.Syntax.t
 val not_inferable : tm:Syntax.t -> 'a
 val ill_typed : tm:Syntax.t -> tp:NbE.Domain.t -> 'a
 
-val with_env : env -> (unit -> 'a) -> 'a
 val with_top_env : (unit -> 'a) -> 'a
 
 type handler = { resolve : Yuujinchou.Trie.path -> ResolveData.t }
