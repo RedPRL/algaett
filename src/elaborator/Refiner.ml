@@ -53,7 +53,8 @@ struct
   let base = RefineEffect.blessed_ulvl
 end
 
-module Structural = struct
+module Structural =
+struct
   let local_var cell = fun () ->
     RefineEffect.quote cell.RefineEffect.tm, cell.RefineEffect.tp
 
