@@ -1,6 +1,4 @@
 type cell = {tm : NbE.Domain.t; tp : NbE.Domain.t}
-type env
-
 exception Error of Errors.t
 
 val bind : name:Syntax.name option -> tp:NbE.Domain.t -> (NbE.Domain.t -> 'a) -> 'a

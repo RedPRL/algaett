@@ -7,40 +7,29 @@ module Syntax = CS
 module Errors = Errors
 module ResolveData = ResolveData
 
-let elab_shift : Syntax.shift -> UL.Shift.t =
-  function
-  | CS.Translate i -> NbE.ULvl.Shift.of_int i
-
-let shifted_blessed_ulvl : Syntax.shift list option -> D.t =
-  function
-  | None -> RefineEffect.blessed_ulvl ()
-  | Some ss ->
-    List.fold_right (fun s l -> D.ULvl.shifted l (elab_shift s)) ss (RefineEffect.blessed_ulvl ())
-
 type infer = unit -> S.t * D.t
+type shift = unit -> D.t
 type check = tp:D.t -> S.t
 type 'a binder = D.t -> 'a
 
 module Structural : sig
-  val var : Syntax.name -> Syntax.shift list option -> infer
+  val local_var : RefineEffect.cell -> infer
+  val global_var : Yuujinchou.Trie.path -> shift -> infer
   val ann : ctp:check -> ctm:check -> infer
 end =
 struct
 
-  let var p s : infer = fun () ->
-    match RefineEffect.resolve_local p, s with
-    | Some ({tm; tp}, ()), None -> RefineEffect.quote tm, tp
-    | Some _, Some _ ->
-      Format.eprintf "@[<2>Local@ variable@ %a@ could@ not@ have@ level@ shifting@]@." Syntax.dump_name p;
-      RefineEffect.not_inferable ~tm:{node = CS.Var (p, s); loc = None}
-    | None, _ ->
-      let ulvl = shifted_blessed_ulvl s in
-      let tm, tp =
-        match RefineEffect.resolve p with
-        | Axiom {tp} -> S.axiom p, tp
-        | Def {tp; tm} -> S.def p tm, tp
-      in
-      S.app tm (RefineEffect.quote ulvl), NbE.app_ulvl ~tp ~ulvl
+  let local_var cell = fun () ->
+    RefineEffect.quote cell.RefineEffect.tm, cell.RefineEffect.tp
+
+  let global_var path shift = fun () ->
+    let ulvl = shift () in
+    let tm, tp =
+      match RefineEffect.resolve path with
+      | ResolveData.Axiom {tp} -> S.axiom path, tp
+      | ResolveData.Def {tp; tm} -> S.def path tm, tp
+    in
+    S.app tm (RefineEffect.quote ulvl), NbE.app_ulvl ~tp ~ulvl
 
   let ann ~ctp ~ctm : infer = fun () ->
     let tp = RefineEffect.eval @@ ctp ~tp:D.univ_top in
@@ -153,13 +142,13 @@ struct
 end
 
 module Univ : sig
-  val univ : Syntax.shift list option -> check
+  val univ : shift -> check
 end =
 struct
-  let univ s ~tp =
+  let univ shift ~tp =
     match tp with
     | D.Univ large ->
-      let vsmall = shifted_blessed_ulvl s in
+      let vsmall = shift () in
       if UL.(<) (UL.of_con vsmall) (UL.of_con large)
       then S.univ (RefineEffect.quote vsmall)
       else begin
@@ -173,10 +162,31 @@ struct
       invalid_arg "univ"
 end
 
+
+let check_shift (s : Syntax.shift list option) : shift =
+  match s with
+  | None ->
+    RefineEffect.blessed_ulvl
+  | Some ss ->
+    fun () ->
+      List.fold_right
+        (fun (CS.Translate i) l -> D.ULvl.shifted l @@ NbE.ULvl.Shift.of_int i)
+        ss
+        (RefineEffect.blessed_ulvl ())
+
+let infer_var p s : infer = fun () ->
+  match RefineEffect.resolve_local p, s with
+  | Some (cell, ()), None -> Structural.local_var cell ()
+  | Some _, Some _ ->
+    Format.eprintf "@[<2>Local@ variable@ %a@ could@ not@ have@ level@ shifting@]@." Syntax.dump_name p;
+    RefineEffect.not_inferable ~tm:{node = CS.Var (p, s); loc = None}
+  | None, _ ->
+    Structural.global_var p (check_shift s) ()
+
 let rec infer tm : infer = fun () ->
   match tm.CS.node with
   | CS.Var (p, s) ->
-    Structural.var p s ()
+    infer_var p s ()
   | CS.Ann {tm; tp} ->
     Structural.ann ~ctp:(check tp) ~ctm:(check tm) ()
   | CS.App (tm1, tm2) ->
@@ -206,7 +216,7 @@ and check ?(fallback_infer=true) tm : check = fun ~tp ->
   | CS.Pair (tm1, tm2) ->
     Sigma.pair ~cfst:(check tm1) ~csnd:(check tm2) ~tp
   | CS.Univ s ->
-    Univ.univ s ~tp
+    Univ.univ (check_shift s) ~tp
   | _ when fallback_infer ->
     begin
       try
