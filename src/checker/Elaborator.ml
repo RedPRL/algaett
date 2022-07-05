@@ -78,62 +78,62 @@ struct
   let blessed_ulvl () = (Eff.read()).blessed_ulvl
 end
 
-open Internal
-
 let elab_shift : Syntax.shift -> UL.Shift.t =
   function
   | CS.Translate i -> NbE.ULvl.Shift.of_int i
 
 let shifted_blessed_ulvl : Syntax.shift list option -> D.t =
   function
-  | None -> blessed_ulvl ()
+  | None -> Internal.blessed_ulvl ()
   | Some ss ->
-    List.fold_right (fun s l -> D.ULvl.shifted l (elab_shift s)) ss (blessed_ulvl ())
-
-let app_ulvl tp ulvl =
-  match NbE.force_all tp with
-  | D.VirPi (D.TpULvl, fam) ->
-    NbE.inst_clo' fam ulvl
-  | _ -> invalid_arg "app_ulvl"
-
-let infer_var (p : CS.name) (s : CS.shift list option) =
-  match resolve_local p, s with
-  | Some ({tm; tp}, ()), None -> quote tm, tp
-  | Some _, Some _ ->
-    Format.eprintf "@[<2>Local@ variable@ %a@ could@ not@ have@ level@ shifting@]@." Syntax.dump_name p;
-    not_inferable ~tm:{node = CS.Var (p, s); loc = None}
-  | None, _ ->
-    let ulvl = shifted_blessed_ulvl s in
-    let tm, tp =
-      match resolve p with
-      | Axiom {tp} -> S.axiom p, tp
-      | Def {tp; tm} -> S.def p tm, tp
-    in
-    S.app tm (quote ulvl), app_ulvl tp ulvl
+    List.fold_right (fun s l -> D.ULvl.shifted l (elab_shift s)) ss (Internal.blessed_ulvl ())
 
 type infer = unit -> S.t * D.t
 type check = tp:D.t -> S.t
 type 'a binder = D.t -> 'a
 
 module Structural : sig
+  val var : Syntax.name -> Syntax.shift list option -> infer
   val ann : ctp:check -> ctm:check -> infer
 end =
 struct
+
+  let var p s : infer = fun () ->
+    match Internal.resolve_local p, s with
+    | Some ({tm; tp}, ()), None -> Internal.quote tm, tp
+    | Some _, Some _ ->
+      Format.eprintf "@[<2>Local@ variable@ %a@ could@ not@ have@ level@ shifting@]@." Syntax.dump_name p;
+      Internal.not_inferable ~tm:{node = CS.Var (p, s); loc = None}
+    | None, _ ->
+      let ulvl = shifted_blessed_ulvl s in
+      let tm, tp =
+        match Internal.resolve p with
+        | Axiom {tp} -> S.axiom p, tp
+        | Def {tp; tm} -> S.def p tm, tp
+      in
+      S.app tm (Internal.quote ulvl), NbE.app_ulvl ~tp ~ulvl
+
   let ann ~ctp ~ctm : infer = fun () ->
-    let tp = eval @@ ctp ~tp:D.univ_top in
+    let tp = Internal.eval @@ ctp ~tp:D.univ_top in
     ctm ~tp, tp
+
 end
 
 module Quantifier : sig
-  val quantifier : name:CS.bound_name -> cbase:check -> cfam:check binder -> (S.t -> S.t -> S.t) -> check
-  val vir_quantifier : name:CS.bound_name -> cbase:check -> cfam:check binder -> (S.t -> S.t -> S.t) -> check
+  type rule = name:CS.bound_name -> cbase:check -> cfam:check binder -> (S.t -> S.t -> S.t) -> check
+
+  val quantifier : rule
+  val vir_quantifier : rule
 end =
 struct
+
+  type rule = name:CS.bound_name -> cbase:check -> cfam:check binder -> (S.t -> S.t -> S.t) -> check
+
   let quantifier ~name ~cbase ~cfam syn : check = fun ~tp ->
     match tp with
     | D.Univ _ ->
       let base = cbase ~tp in
-      let fam = bind ~name ~tp:(eval base) @@ fun x -> cfam x ~tp in
+      let fam = Internal.bind ~name ~tp:(Internal.eval base) @@ fun x -> cfam x ~tp in
       syn base fam
     | _ ->
       invalid_arg "quantifier"
@@ -142,7 +142,7 @@ struct
     match tp with
     | D.Univ _ ->
       let base = cbase ~tp:D.VirUniv in
-      let fam = bind ~name ~tp:(eval base) @@ fun x -> cfam x ~tp in
+      let fam = Internal.bind ~name ~tp:(Internal.eval base) @@ fun x -> cfam x ~tp in
       syn base fam
     | _ ->
       invalid_arg "quantifier"
@@ -164,7 +164,7 @@ struct
     match tp with
     | D.Sigma (base, fam) ->
       let tm1 = cfst ~tp:base in
-      let tp2 = NbE.inst_clo fam @@ lazy_eval tm1 in
+      let tp2 = NbE.inst_clo fam @@ Internal.lazy_eval tm1 in
       let tm2 = csnd ~tp:tp2 in
       S.pair tm1 tm2
     | _ ->
@@ -182,7 +182,7 @@ struct
     let tm, tp = itm () in
     match NbE.force_all tp with
     | D.Sigma (_, fam) ->
-      let tp = NbE.inst_clo fam @@ lazy_eval @@ S.fst tm in
+      let tp = NbE.inst_clo fam @@ Internal.lazy_eval @@ S.fst tm in
       S.snd tm, tp
     | _ ->
       invalid_arg "snd"
@@ -206,7 +206,7 @@ struct
   let lam ~name ~cbnd : check = fun ~tp ->
     match tp with
     | D.Pi (base, fam) | D.VirPi (base, fam) ->
-      bind ~name ~tp:base @@ fun arg ->
+      Internal.bind ~name ~tp:base @@ fun arg ->
       S.lam @@ cbnd arg ~tp:(NbE.inst_clo' fam arg)
     | _ ->
       failwith ""
@@ -216,7 +216,7 @@ struct
     match NbE.force_all fn_tp with
     | D.Pi (base, fam) | D.VirPi (base, fam) ->
       let arg = ctm ~tp:base in
-      let fib = NbE.inst_clo fam @@ lazy_eval arg in
+      let fib = NbE.inst_clo fam @@ Internal.lazy_eval arg in
       S.app fn arg, fib
     | _ ->
       invalid_arg "app"
@@ -232,7 +232,7 @@ struct
     | D.Univ large ->
       let vsmall = shifted_blessed_ulvl s in
       if UL.(<) (UL.of_con vsmall) (UL.of_con large)
-      then S.univ (quote vsmall)
+      then S.univ (Internal.quote vsmall)
       else begin
         let pp_lvl = Mugen.Syntax.Free.dump NbE.ULvl.Shift.dump Format.pp_print_int in
         Format.eprintf "@[<2>Universe@ level@ %a@ is@ not@ smaller@ than@ %a@]@."
@@ -247,7 +247,7 @@ end
 let rec infer tm : infer = fun () ->
   match tm.CS.node with
   | CS.Var (p, s) ->
-    infer_var p s
+    Structural.var p s ()
   | CS.Ann {tm; tp} ->
     Structural.ann ~ctp:(check tp) ~ctm:(check tm) ()
   | CS.App (tm1, tm2) ->
@@ -258,7 +258,7 @@ let rec infer tm : infer = fun () ->
     Sigma.snd ~itm:(infer tm) ()
   | _ ->
     (* Format.eprintf "@[<2>Could@ not@ infer@ the@ type@ of@ %a@]@." Syntax.dump tm; *)
-    not_inferable ~tm
+    Internal.not_inferable ~tm
 
 (* The [fallback_infer] parameter is for the two-stage type checking: first round,
    we try to check things without unfolding the type, and then we unfold the type
@@ -284,18 +284,18 @@ and check ?(fallback_infer=true) tm : check = fun ~tp ->
         match infer tm () with
         | tm', tp' ->
           begin
-            try equate tp' `LE tp; tm' with
-            | NbE.Unequal -> ill_typed ~tm ~tp
+            try Internal.equate tp' `LE tp; tm' with
+            | NbE.Unequal -> Internal.ill_typed ~tm ~tp
           end
-      with Error (NotInferable _) ->
+      with Internal.Error (NotInferable _) ->
       match tp with
       | D.Unfold _ ->
         check ~fallback_infer:false tm ~tp:(NbE.force_all tp)
       | _ ->
-        ill_typed ~tm ~tp
+        Internal.ill_typed ~tm ~tp
     end
   | _ ->
-    ill_typed ~tm ~tp
+    Internal.ill_typed ~tm ~tp
 
 (* the public interface *)
 
@@ -304,22 +304,23 @@ type error = Internal.error =
   | IllTyped of {tm: Syntax.t; tp: D.t}
 
 let infer_top tm =
-  trap @@ fun () ->
+  Internal.trap @@ fun () ->
   let tm, tp =
-    Eff.run ~env:top_env @@ fun () ->
-    let tm, tp = infer tm () in tm, quote tp
+    Internal.Eff.run ~env:top_env @@ fun () ->
+    let tm, tp = infer tm () in tm, Internal.quote tp
   in
   S.lam tm, NbE.eval_top (S.vir_pi S.tp_ulvl tp)
 
 let check_tp_top tp =
-  trap @@ fun () ->
-  let tp = Eff.run ~env:top_env @@ fun () -> check tp ~tp:D.univ_top in
+  Internal.trap @@ fun () ->
+  let tp = Internal.Eff.run ~env:top_env @@ fun () -> check tp ~tp:D.univ_top in
   S.vir_pi S.tp_ulvl tp
 
 let check_top tm ~tp =
-  trap @@ fun () ->
-  let tm = Eff.run ~env:top_env @@ fun () -> check tm ~tp:(app_ulvl tp @@ blessed_ulvl()) in
-  S.lam tm
+  Internal.trap @@ fun () ->
+  S.lam @@
+  Internal.Eff.run ~env:top_env @@ fun () ->
+  check tm ~tp:(NbE.app_ulvl ~tp ~ulvl:(Internal.blessed_ulvl ()))
 
 type handler = { resolve : Yuujinchou.Trie.path -> resolve_data }
 
@@ -328,7 +329,8 @@ let run f h =
     { effc =
         fun (type a) (eff : a Effect.t) ->
           match eff with
-          | Resolve p -> Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
+          | Internal.Resolve p ->
+            Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
             Algaeff.Fun.Deep.finally k (fun () -> h.resolve p)
           | _ -> None }
 
