@@ -9,7 +9,7 @@ module ResolveData = ResolveData
 
 module R = Refiner
 
-let check_shift (s : CS.shift list option) : R.shift =
+let check_shift (s : CS.shift list option) : Rule.shift =
   match s with
   | None ->
     R.Shift.base
@@ -19,7 +19,7 @@ let check_shift (s : CS.shift list option) : R.shift =
       ss
       R.Shift.base
 
-let infer_var p s : R.infer =
+let infer_var p s : Rule.infer =
   match RefineEffect.resolve_local p, s with
   | Some (cell, ()), None ->
     R.Structural.local_var cell
@@ -29,7 +29,7 @@ let infer_var p s : R.infer =
   | None, _ ->
     R.Structural.global_var p (check_shift s)
 
-let rec infer tm : R.infer =
+let rec infer tm : Rule.infer =
   match tm.CS.node with
   | CS.Var (p, s) ->
     infer_var p s
@@ -49,8 +49,8 @@ let rec infer tm : R.infer =
    we try to check things without unfolding the type, and then we unfold the type
    if type inference also fails. During the second round, we do not want to try
    the type inference again becouse it will have already failed once. *)
-and check ?(fallback_infer=true) tm : R.check =
-  R.Check.peek @@ fun ~tp ->
+and check ?(fallback_infer=true) tm : Rule.check =
+  Rule.Check.peek @@ fun ~tp ->
   match tm.CS.node with
   | CS.Pi (base, name, fam) ->
     R.Pi.pi ~name ~cbase:(check base) ~cfam:(fun _ -> check fam)
@@ -66,11 +66,11 @@ and check ?(fallback_infer=true) tm : R.check =
     R.Univ.univ (check_shift s)
   | _ when fallback_infer ->
     begin
-      R.Check.peek @@ fun ~tp ->
-      R.Check.orelse (R.Check.infer (infer tm)) @@ fun err ->
+      Rule.Check.peek @@ fun ~tp ->
+      Rule.Check.orelse (Rule.Check.infer (infer tm)) @@ fun err ->
       match err, tp with
       | NotInferable _, D.Unfold _ ->
-        R.Check.forcing @@ check ~fallback_infer:false tm
+        Rule.Check.forcing @@ check ~fallback_infer:false tm
       | _ ->
         RefineEffect.ill_typed ~tm ~tp
     end
@@ -84,20 +84,20 @@ let infer_top tm =
   RefineEffect.trap @@ fun () ->
   let tm, tp =
     RefineEffect.with_top_env @@ fun () ->
-    let tm, tp = R.Infer.run @@ infer tm in tm, RefineEffect.quote tp
+    let tm, tp = Rule.Infer.run @@ infer tm in tm, RefineEffect.quote tp
   in
   S.lam tm, NbE.eval_top (S.vir_pi S.tp_ulvl tp)
 
 let check_tp_top tp =
   RefineEffect.trap @@ fun () ->
-  let tp = RefineEffect.with_top_env @@ fun () -> R.Check.run ~tp:D.univ_top @@ check tp in
+  let tp = RefineEffect.with_top_env @@ fun () -> Rule.Check.run ~tp:D.univ_top @@ check tp in
   S.vir_pi S.tp_ulvl tp
 
 let check_top tm ~tp =
   RefineEffect.trap @@ fun () ->
   S.lam @@
   RefineEffect.with_top_env @@ fun () ->
-  R.Check.run ~tp:(NbE.app_ulvl ~tp ~ulvl:(RefineEffect.blessed_ulvl ())) @@ check tm
+  Rule.Check.run ~tp:(NbE.app_ulvl ~tp ~ulvl:(RefineEffect.blessed_ulvl ())) @@ check tm
 
 type handler = RefineEffect.handler = { resolve : CS.name -> ResolveData.t }
 let run = RefineEffect.run
