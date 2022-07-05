@@ -10,7 +10,48 @@ module ResolveData = ResolveData
 type infer = unit -> S.t * D.t
 type shift = unit -> D.t
 type check = tp:D.t -> S.t
-type 'a binder = D.t -> 'a
+type hyp = RefineEffect.cell
+type 'a binder = hyp -> 'a
+
+module Hyp = RefineEffect.Cell
+
+module Infer =
+struct
+  type t = infer
+  let run t = t ()
+end
+
+module Check =
+struct
+  type t = check
+  let run ~tp t = t ~tp
+  let peek t ~tp = t ~tp ~tp
+
+  let forcing (t : t) : t = fun ~tp ->
+    t ~tp:(NbE.force_all tp)
+
+  let infer (inf : infer) : check = fun ~tp ->
+    let tm', tp' = Infer.run inf in
+    try RefineEffect.equate tp' `LE tp; tm' with
+    | NbE.Unequal -> RefineEffect.not_convertible tp tp'
+
+  let orelse t k : check = fun ~tp ->
+    try t ~tp with
+    | RefineEffect.Error err ->
+      k err ~tp
+
+end
+
+module Shift =
+struct
+  type t = shift
+  let run t = t ()
+
+  let shifted t i = fun () ->
+    D.ULvl.shifted (t ()) (NbE.ULvl.Shift.of_int i)
+
+  let blessed = RefineEffect.blessed_ulvl
+end
 
 module Structural = struct
   let local_var cell = fun () ->
@@ -44,7 +85,8 @@ struct
     match tp with
     | D.Univ _ ->
       let base = cbase ~tp in
-      let fam = RefineEffect.bind ~name ~tp:(RefineEffect.eval base) @@ fun x -> cfam x ~tp in
+      let vbase = RefineEffect.eval base in
+      let fam = RefineEffect.bind ~name ~tp:vbase @@ fun x -> cfam x ~tp in
       syn base fam
     | _ ->
       invalid_arg "quantifier"
@@ -53,7 +95,8 @@ struct
     match tp with
     | D.Univ _ ->
       let base = cbase ~tp:D.VirUniv in
-      let fam = RefineEffect.bind ~name ~tp:(RefineEffect.eval base) @@ fun x -> cfam x ~tp in
+      let vbase = RefineEffect.eval base in
+      let fam = RefineEffect.bind ~name ~tp:vbase @@ fun x -> cfam x ~tp in
       syn base fam
     | _ ->
       invalid_arg "quantifier"
@@ -105,7 +148,7 @@ struct
     match tp with
     | D.Pi (base, fam) | D.VirPi (base, fam) ->
       RefineEffect.bind ~name ~tp:base @@ fun arg ->
-      S.lam @@ cbnd arg ~tp:(NbE.inst_clo' fam arg)
+      S.lam @@ cbnd arg ~tp:(NbE.inst_clo' fam @@ Hyp.tm arg)
     | _ ->
       failwith ""
 

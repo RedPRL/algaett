@@ -1,7 +1,15 @@
 type cell = {tm : NbE.Domain.t; tp : NbE.Domain.t}
+
+module Cell :
+sig
+  type t = cell
+  val tm : t -> NbE.Domain.t
+  val tp : t -> NbE.Domain.t
+end
+
 exception Error of Errors.t
 
-val bind : name:Syntax.name option -> tp:NbE.Domain.t -> (NbE.Domain.t -> 'a) -> 'a
+val bind : name:Syntax.name option -> tp:NbE.Domain.t -> (cell -> 'a) -> 'a
 
 val trap : (unit -> 'a) -> ('a, Errors.t) Result.t
 
@@ -20,6 +28,7 @@ val quote : NbE.Domain.t -> NbE.Syntax.t
 
 val not_inferable : tm:Syntax.t -> 'a
 val ill_typed : tm:Syntax.t -> tp:NbE.Domain.t -> 'a
+val not_convertible : NbE.Domain.t -> NbE.Domain.t -> 'a
 
 val with_top_env : (unit -> 'a) -> 'a
 

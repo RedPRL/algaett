@@ -2,6 +2,7 @@ type error =
   | NotInScope of Yuujinchou.Trie.path
   | NotInferable of {tm: Syntax.t}
   | IllTyped of {tm: Syntax.t; tp: NbE.Domain.t}
+  | Conversion of NbE.Domain.t * NbE.Domain.t
 
 exception Error of error
 
@@ -12,6 +13,8 @@ let reraise_elaborator =
   | Ok v -> v
   | Error (Elaborator.Errors.NotInferable {tm}) -> raise (Error (NotInferable {tm}))
   | Error (Elaborator.Errors.IllTyped {tm; tp}) -> raise (Error (IllTyped {tm; tp}))
+  | Error (Elaborator.Errors.Conversion (u, v)) -> raise (Error (Conversion (u, v)))
+
 
 let not_in_scope n = raise (Error (NotInScope n))
 
