@@ -1,82 +1,11 @@
-open Bwd
-open BwdNotation
-
 module CS = Syntax
 module S = NbE.Syntax
 module D = NbE.Domain
 module UL = NbE.ULvl
 
-type cell = {tm : D.t; tp : D.t}
-
-type env = {
-  blessed_ulvl : D.t;
-  local_names : (cell, unit) Yuujinchou.Trie.t;
-  locals : D.t Lazy.t bwd;
-  size : int;
-}
-
-let top_env = {
-  blessed_ulvl = D.lvl 0;
-  local_names = Yuujinchou.Trie.empty;
-  locals = Emp #< (Lazy.from_val @@ D.lvl 0);
-  size = 1;
-}
-
-type resolve_data =
-  | Axiom of {tp : NbE.Domain.t}
-  | Def of {tm: NbE.Domain.t Lazy.t; tp: NbE.Domain.t}
-
-module Internal =
-struct
-  type _ Effect.t += Resolve : Yuujinchou.Trie.path -> resolve_data Effect.t
-
-  let resolve p = Effect.perform (Resolve p)
-
-  type error =
-    | NotInferable of {tm: Syntax.t}
-    | IllTyped of {tm: Syntax.t; tp: D.t}
-
-  exception Error of error
-
-  let not_inferable ~tm = raise (Error (NotInferable {tm}))
-
-  let ill_typed ~tm ~tp = raise (Error (IllTyped {tm; tp}))
-
-  let trap f = try Result.ok (f ()) with Error e -> Result.error e
-
-  module Eff = Algaeff.Reader.Make (struct type nonrec env = env end)
-  (* invariant: the return values must be effect-less *)
-  let eval tm = NbE.eval ~env:(Eff.read()).locals tm
-
-  let lazy_eval tm =
-    let env = (Eff.read()).locals in
-    lazy begin NbE.eval ~env tm end
-
-  let quote v = NbE.quote ~size:(Eff.read()).size v
-
-  let equate v = NbE.equate ~size:(Eff.read()).size v
-
-  let resolve_local p = Yuujinchou.Trie.find_singleton p (Eff.read()).local_names
-
-  let bind ~name ~tp f =
-    let arg = D.lvl (Eff.read()).size in
-    let update env =
-      {blessed_ulvl = env.blessed_ulvl;
-       size = env.size + 1;
-       locals = env.locals #< (Lazy.from_val arg);
-       local_names =
-         match name with
-         | None -> env.local_names
-         | Some name ->
-           Yuujinchou.Trie.update_singleton
-             name
-             (fun _ -> Some ({tm = arg; tp}, ()))
-             env.local_names}
-    in
-    Eff.scope update @@ fun () -> f arg
-
-  let blessed_ulvl () = (Eff.read()).blessed_ulvl
-end
+module Syntax = CS
+module Errors = Errors
+module ResolveData = ResolveData
 
 let elab_shift : Syntax.shift -> UL.Shift.t =
   function
@@ -84,9 +13,9 @@ let elab_shift : Syntax.shift -> UL.Shift.t =
 
 let shifted_blessed_ulvl : Syntax.shift list option -> D.t =
   function
-  | None -> Internal.blessed_ulvl ()
+  | None -> RefineEffect.blessed_ulvl ()
   | Some ss ->
-    List.fold_right (fun s l -> D.ULvl.shifted l (elab_shift s)) ss (Internal.blessed_ulvl ())
+    List.fold_right (fun s l -> D.ULvl.shifted l (elab_shift s)) ss (RefineEffect.blessed_ulvl ())
 
 type infer = unit -> S.t * D.t
 type check = tp:D.t -> S.t
@@ -99,22 +28,22 @@ end =
 struct
 
   let var p s : infer = fun () ->
-    match Internal.resolve_local p, s with
-    | Some ({tm; tp}, ()), None -> Internal.quote tm, tp
+    match RefineEffect.resolve_local p, s with
+    | Some ({tm; tp}, ()), None -> RefineEffect.quote tm, tp
     | Some _, Some _ ->
       Format.eprintf "@[<2>Local@ variable@ %a@ could@ not@ have@ level@ shifting@]@." Syntax.dump_name p;
-      Internal.not_inferable ~tm:{node = CS.Var (p, s); loc = None}
+      RefineEffect.not_inferable ~tm:{node = CS.Var (p, s); loc = None}
     | None, _ ->
       let ulvl = shifted_blessed_ulvl s in
       let tm, tp =
-        match Internal.resolve p with
+        match RefineEffect.resolve p with
         | Axiom {tp} -> S.axiom p, tp
         | Def {tp; tm} -> S.def p tm, tp
       in
-      S.app tm (Internal.quote ulvl), NbE.app_ulvl ~tp ~ulvl
+      S.app tm (RefineEffect.quote ulvl), NbE.app_ulvl ~tp ~ulvl
 
   let ann ~ctp ~ctm : infer = fun () ->
-    let tp = Internal.eval @@ ctp ~tp:D.univ_top in
+    let tp = RefineEffect.eval @@ ctp ~tp:D.univ_top in
     ctm ~tp, tp
 
 end
@@ -133,7 +62,7 @@ struct
     match tp with
     | D.Univ _ ->
       let base = cbase ~tp in
-      let fam = Internal.bind ~name ~tp:(Internal.eval base) @@ fun x -> cfam x ~tp in
+      let fam = RefineEffect.bind ~name ~tp:(RefineEffect.eval base) @@ fun x -> cfam x ~tp in
       syn base fam
     | _ ->
       invalid_arg "quantifier"
@@ -142,7 +71,7 @@ struct
     match tp with
     | D.Univ _ ->
       let base = cbase ~tp:D.VirUniv in
-      let fam = Internal.bind ~name ~tp:(Internal.eval base) @@ fun x -> cfam x ~tp in
+      let fam = RefineEffect.bind ~name ~tp:(RefineEffect.eval base) @@ fun x -> cfam x ~tp in
       syn base fam
     | _ ->
       invalid_arg "quantifier"
@@ -164,7 +93,7 @@ struct
     match tp with
     | D.Sigma (base, fam) ->
       let tm1 = cfst ~tp:base in
-      let tp2 = NbE.inst_clo fam @@ Internal.lazy_eval tm1 in
+      let tp2 = NbE.inst_clo fam @@ RefineEffect.lazy_eval tm1 in
       let tm2 = csnd ~tp:tp2 in
       S.pair tm1 tm2
     | _ ->
@@ -182,7 +111,7 @@ struct
     let tm, tp = itm () in
     match NbE.force_all tp with
     | D.Sigma (_, fam) ->
-      let tp = NbE.inst_clo fam @@ Internal.lazy_eval @@ S.fst tm in
+      let tp = NbE.inst_clo fam @@ RefineEffect.lazy_eval @@ S.fst tm in
       S.snd tm, tp
     | _ ->
       invalid_arg "snd"
@@ -206,7 +135,7 @@ struct
   let lam ~name ~cbnd : check = fun ~tp ->
     match tp with
     | D.Pi (base, fam) | D.VirPi (base, fam) ->
-      Internal.bind ~name ~tp:base @@ fun arg ->
+      RefineEffect.bind ~name ~tp:base @@ fun arg ->
       S.lam @@ cbnd arg ~tp:(NbE.inst_clo' fam arg)
     | _ ->
       failwith ""
@@ -216,7 +145,7 @@ struct
     match NbE.force_all fn_tp with
     | D.Pi (base, fam) | D.VirPi (base, fam) ->
       let arg = ctm ~tp:base in
-      let fib = NbE.inst_clo fam @@ Internal.lazy_eval arg in
+      let fib = NbE.inst_clo fam @@ RefineEffect.lazy_eval arg in
       S.app fn arg, fib
     | _ ->
       invalid_arg "app"
@@ -232,7 +161,7 @@ struct
     | D.Univ large ->
       let vsmall = shifted_blessed_ulvl s in
       if UL.(<) (UL.of_con vsmall) (UL.of_con large)
-      then S.univ (Internal.quote vsmall)
+      then S.univ (RefineEffect.quote vsmall)
       else begin
         let pp_lvl = Mugen.Syntax.Free.dump NbE.ULvl.Shift.dump Format.pp_print_int in
         Format.eprintf "@[<2>Universe@ level@ %a@ is@ not@ smaller@ than@ %a@]@."
@@ -258,7 +187,7 @@ let rec infer tm : infer = fun () ->
     Sigma.snd ~itm:(infer tm) ()
   | _ ->
     (* Format.eprintf "@[<2>Could@ not@ infer@ the@ type@ of@ %a@]@." Syntax.dump tm; *)
-    Internal.not_inferable ~tm
+    RefineEffect.not_inferable ~tm
 
 (* The [fallback_infer] parameter is for the two-stage type checking: first round,
    we try to check things without unfolding the type, and then we unfold the type
@@ -284,54 +213,40 @@ and check ?(fallback_infer=true) tm : check = fun ~tp ->
         match infer tm () with
         | tm', tp' ->
           begin
-            try Internal.equate tp' `LE tp; tm' with
-            | NbE.Unequal -> Internal.ill_typed ~tm ~tp
+            try RefineEffect.equate tp' `LE tp; tm' with
+            | NbE.Unequal -> RefineEffect.ill_typed ~tm ~tp
           end
-      with Internal.Error (NotInferable _) ->
+      with RefineEffect.Error (NotInferable _) ->
       match tp with
       | D.Unfold _ ->
         check ~fallback_infer:false tm ~tp:(NbE.force_all tp)
       | _ ->
-        Internal.ill_typed ~tm ~tp
+        RefineEffect.ill_typed ~tm ~tp
     end
   | _ ->
-    Internal.ill_typed ~tm ~tp
+    RefineEffect.ill_typed ~tm ~tp
 
 (* the public interface *)
 
-type error = Internal.error =
-  | NotInferable of {tm: Syntax.t}
-  | IllTyped of {tm: Syntax.t; tp: D.t}
-
 let infer_top tm =
-  Internal.trap @@ fun () ->
+  RefineEffect.trap @@ fun () ->
   let tm, tp =
-    Internal.Eff.run ~env:top_env @@ fun () ->
-    let tm, tp = infer tm () in tm, Internal.quote tp
+    RefineEffect.with_top_env @@ fun () ->
+    let tm, tp = infer tm () in tm, RefineEffect.quote tp
   in
   S.lam tm, NbE.eval_top (S.vir_pi S.tp_ulvl tp)
 
 let check_tp_top tp =
-  Internal.trap @@ fun () ->
-  let tp = Internal.Eff.run ~env:top_env @@ fun () -> check tp ~tp:D.univ_top in
+  RefineEffect.trap @@ fun () ->
+  let tp = RefineEffect.with_top_env @@ fun () -> check tp ~tp:D.univ_top in
   S.vir_pi S.tp_ulvl tp
 
 let check_top tm ~tp =
-  Internal.trap @@ fun () ->
+  RefineEffect.trap @@ fun () ->
   S.lam @@
-  Internal.Eff.run ~env:top_env @@ fun () ->
-  check tm ~tp:(NbE.app_ulvl ~tp ~ulvl:(Internal.blessed_ulvl ()))
+  RefineEffect.with_top_env @@ fun () ->
+  check tm ~tp:(NbE.app_ulvl ~tp ~ulvl:(RefineEffect.blessed_ulvl ()))
 
-type handler = { resolve : Yuujinchou.Trie.path -> resolve_data }
-
-let run f h =
-  Effect.Deep.try_with f ()
-    { effc =
-        fun (type a) (eff : a Effect.t) ->
-          match eff with
-          | Internal.Resolve p ->
-            Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
-            Algaeff.Fun.Deep.finally k (fun () -> h.resolve p)
-          | _ -> None }
-
-let perform : handler = { resolve = Internal.resolve }
+type handler = RefineEffect.handler = { resolve : CS.name -> ResolveData.t }
+let run = RefineEffect.run
+let perform = RefineEffect.perform

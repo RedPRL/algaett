@@ -11,10 +11,10 @@ let include_singleton ?loc name data =
 let rec execute_decl {CS.node = decl; CS.loc = loc} =
   match decl with
   | CS.Axiom {name; tp} ->
-    let tp = NbE.eval_top @@ UE.reraise_checker @@ Checker.check_tp_top tp in
+    let tp = NbE.eval_top @@ UE.reraise_elaborator @@ Elaborator.check_tp_top tp in
     include_singleton ?loc name @@ Axiom {tp}
   | CS.Def {name; tm} ->
-    let tm, tp = UE.reraise_checker @@ Checker.infer_top tm in (* we want to type check the term now *)
+    let tm, tp = UE.reraise_elaborator @@ Elaborator.infer_top tm in (* we want to type check the term now *)
     include_singleton ?loc name @@ Def {tm = lazy begin NbE.eval_top tm end; tp}
   | CS.Import {unit_path; modifier} ->
     UE.import ?loc unit_path modifier

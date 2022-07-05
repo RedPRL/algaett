@@ -7,21 +7,21 @@ exception Error of error
 
 let trap f = try Result.ok (f ()) with Error e -> Result.error e
 
-let reraise_checker =
+let reraise_elaborator =
   function
   | Ok v -> v
-  | Error (Checker.NotInferable {tm}) -> raise (Error (NotInferable {tm}))
-  | Error (Checker.IllTyped {tm; tp}) -> raise (Error (IllTyped {tm; tp}))
+  | Error (Elaborator.Errors.NotInferable {tm}) -> raise (Error (NotInferable {tm}))
+  | Error (Elaborator.Errors.IllTyped {tm; tp}) -> raise (Error (IllTyped {tm; tp}))
 
 let not_in_scope n = raise (Error (NotInScope n))
 
 type _ Effect.t +=
-  | Load : Bantorra.Manager.path -> Checker.resolve_data Yuujinchou.Trie.Untagged.t Effect.t
+  | Load : Bantorra.Manager.path -> Elaborator.ResolveData.t Yuujinchou.Trie.Untagged.t Effect.t
   | Preload : Bantorra.Manager.path -> unit Effect.t
   | WarnUnused : Used.info -> unit Effect.t
 
 type handler =
-  { load : Bantorra.Manager.path -> Checker.resolve_data Yuujinchou.Trie.Untagged.t;
+  { load : Bantorra.Manager.path -> Elaborator.ResolveData.t Yuujinchou.Trie.Untagged.t;
     preload : Bantorra.Manager.path -> unit;
     warn_unused : Used.info -> unit }
 
@@ -35,7 +35,7 @@ let perform : handler = { load; preload; warn_unused }
 
 module S = Yuujinchou.Scope.Make
     (struct
-      type data = Checker.resolve_data
+      type data = Elaborator.ResolveData.t
       type tag = Used.id
       type hook = Syntax.empty
       type context = Syntax.empty
@@ -67,7 +67,7 @@ let run_scope f =
       hook = (fun _ _ -> function _ -> .) }
 
 let run_checker f =
-  Checker.run f
+  Elaborator.run f
     { resolve =
         (fun p ->
            match S.resolve p with

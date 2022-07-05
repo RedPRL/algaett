@@ -8,11 +8,11 @@ type error =
 val execute : Syntax.prog -> (unit, error) result
 
 type unused_info =
-  | Imported of Bantorra.Manager.path Checker.Syntax.node
-  | Local of Yuujinchou.Trie.path Checker.Syntax.node
+  | Imported of Bantorra.Manager.path Elaborator.Syntax.node
+  | Local of Yuujinchou.Trie.path Elaborator.Syntax.node
 
 type handler =
-  { load : Bantorra.Manager.path -> Checker.resolve_data Yuujinchou.Trie.Untagged.t;
+  { load : Bantorra.Manager.path -> Elaborator.ResolveData.t Yuujinchou.Trie.Untagged.t;
     preload : Bantorra.Manager.path -> unit;
     warn_unused : unused_info -> unit }
 

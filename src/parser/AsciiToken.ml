@@ -8,7 +8,7 @@ let raw_seg = Earley.(no_blank_layout @@ greedy @@ raw_seg_)
 
 let keywords =
   let open KeywordClass in
-  let module S = Checker.Syntax in
+  let module S = Elaborator.Syntax in
   Hashtbl.of_seq @@ List.to_seq [
     "_", Underscore;
 
