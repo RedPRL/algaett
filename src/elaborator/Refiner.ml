@@ -21,11 +21,11 @@ end
 module Structural =
 struct
   let local_var cell =
-    R.Infer.rule @@ fun () ->
+    R.Infer.rule @@ fun _ ->
     RefineEffect.quote cell.RefineEffect.tm, cell.RefineEffect.tp
 
   let global_var path shift =
-    R.Infer.rule @@ fun () ->
+    R.Infer.rule @@ fun _ ->
     let ulvl = R.Shift.run shift in
     let tm, tp =
       match RefineEffect.resolve path with
@@ -35,9 +35,9 @@ struct
     S.app tm (RefineEffect.quote ulvl), NbE.app_ulvl ~tp ~ulvl
 
   let ann ~ctp ~ctm : R.infer =
-    R.Infer.rule @@ fun () ->
-    let tp = RefineEffect.eval @@ R.Check.run ~tp:D.univ_top ctp in
-    R.Check.run ~tp ctm, tp
+    R.Infer.rule @@ fun goal ->
+    let tp = RefineEffect.eval @@ R.Check.run {tp = D.univ_top; lhs = LHS.unknown} ctp in
+    R.Check.run {tp; lhs = goal.lhs} ctm, tp
 end
 
 module Quantifier :
@@ -52,23 +52,29 @@ struct
   type rule = name:Yuujinchou.Trie.path option -> cbase:R.check -> cfam:R.check R.binder -> (S.t -> S.t -> S.t) -> R.check
 
   let quantifier ~name ~cbase ~cfam syn : R.check =
-    R.Check.rule @@ fun ~tp ->
-    match tp with
+    R.Check.rule @@ fun goal ->
+    match goal.tp with
     | D.Univ _ ->
-      let base = R.Check.run ~tp cbase in
+      let base = R.Check.run {tp = goal.tp; lhs = LHS.unknown} cbase in
       let vbase = RefineEffect.eval base in
-      let fam = RefineEffect.bind ~name ~tp:vbase @@ fun x -> R.Check.run ~tp @@ cfam x in
+      let fam =
+        RefineEffect.bind ~name ~tp:vbase @@ fun x ->
+        R.Check.run {tp = goal.tp; lhs = LHS.unknown} @@ cfam x
+      in
       syn base fam
     | _ ->
       invalid_arg "quantifier"
 
   let vir_quantifier ~name ~cbase ~cfam syn : R.check =
-    R.Check.rule @@ fun ~tp ->
-    match tp with
+    R.Check.rule @@ fun goal ->
+    match goal.tp with
     | D.Univ _ ->
-      let base = R.Check.run ~tp:D.VirUniv cbase in
+      let base = R.Check.run {tp = D.VirUniv; lhs = LHS.unknown} cbase in
       let vbase = RefineEffect.eval base in
-      let fam = RefineEffect.bind ~name ~tp:vbase @@ fun x -> R.Check.run ~tp @@ cfam x in
+      let fam =
+        RefineEffect.bind ~name ~tp:vbase @@ fun x ->
+        R.Check.run {tp = goal.tp; lhs = LHS.unknown} @@ cfam x
+      in
       syn base fam
     | _ ->
       invalid_arg "quantifier"
@@ -81,19 +87,19 @@ struct
     Quantifier.quantifier ~name ~cbase ~cfam S.sigma
 
   let pair ~cfst ~csnd : R.check =
-    R.Check.rule @@ fun ~tp ->
-    match tp with
+    R.Check.rule @@ fun goal ->
+    match goal.tp with
     | D.Sigma (base, fam) ->
-      let tm1 = R.Check.run ~tp:base cfst in
+      let tm1 = R.Check.run {tp = base; lhs = LHS.fst goal.lhs} cfst in
       let tp2 = NbE.inst_clo fam @@ RefineEffect.lazy_eval tm1 in
-      let tm2 = R.Check.run ~tp:tp2 csnd in
+      let tm2 = R.Check.run {tp = tp2; lhs = LHS.snd goal.lhs} csnd in
       S.pair tm1 tm2
     | _ ->
       invalid_arg "pair"
 
   let fst ~itm : R.infer =
-    R.Infer.rule @@ fun () ->
-    let tm, tp = R.Infer.run itm in
+    R.Infer.rule @@ fun _ ->
+    let tm, tp = R.Infer.run {lhs = LHS.unknown} itm in
     match NbE.force_all tp with
     | D.Sigma (base, _) ->
       S.fst tm, base
@@ -101,8 +107,8 @@ struct
       invalid_arg "fst"
 
   let snd ~itm : R.infer =
-    R.Infer.rule @@ fun () ->
-    let tm, tp = R.Infer.run itm in
+    R.Infer.rule @@ fun _ ->
+    let tm, tp = R.Infer.run {lhs = LHS.unknown} itm in
     match NbE.force_all tp with
     | D.Sigma (_, fam) ->
       let tp = NbE.inst_clo fam @@ RefineEffect.lazy_eval @@ S.fst tm in
@@ -120,21 +126,21 @@ struct
     Quantifier.vir_quantifier ~name ~cbase ~cfam S.pi
 
   let lam ~name ~cbnd : R.check =
-    R.Check.rule @@ fun ~tp ->
-    match tp with
+    R.Check.rule @@ fun goal ->
+    match goal.tp with
     | D.Pi (base, fam) | D.VirPi (base, fam) ->
       RefineEffect.bind ~name ~tp:base @@ fun arg ->
       let fib = NbE.inst_clo' fam @@ Hyp.tm arg in
-      S.lam @@ R.Check.run ~tp:fib @@ cbnd arg
+      S.lam @@ R.Check.run {tp = fib; lhs = LHS.app goal.lhs arg} @@ cbnd arg
     | _ ->
-    invalid_arg "lam"
+      invalid_arg "lam"
 
   let app ~itm ~ctm : R.infer =
-    R.Infer.rule @@ fun () ->
-    let fn, fn_tp = R.Infer.run itm in
+    R.Infer.rule @@ fun _ ->
+    let fn, fn_tp = R.Infer.run {lhs = LHS.unknown} itm in
     match NbE.force_all fn_tp with
     | D.Pi (base, fam) | D.VirPi (base, fam) ->
-      let arg = R.Check.run ~tp:base ctm in
+      let arg = R.Check.run {tp = base; lhs = LHS.unknown} ctm in
       let fib = NbE.inst_clo fam @@ RefineEffect.lazy_eval arg in
       S.app fn arg, fib
     | _ ->
@@ -144,8 +150,8 @@ end
 module Univ =
 struct
   let univ shift =
-    R.Check.rule @@ fun ~tp ->
-    match tp with
+    R.Check.rule @@ fun goal ->
+    match goal.tp with
     | D.Univ large ->
       let vsmall = R.Shift.run shift in
       if UL.(<) (UL.of_con vsmall) (UL.of_con large)

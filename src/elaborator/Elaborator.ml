@@ -50,7 +50,6 @@ let rec infer tm : Rule.infer =
    if type inference also fails. During the second round, we do not want to try
    the type inference again becouse it will have already failed once. *)
 and check ?(fallback_infer=true) tm : Rule.check =
-  Rule.Check.peek @@ fun ~tp ->
   match tm.CS.node with
   | CS.Pi (base, name, fam) ->
     R.Pi.pi ~name ~cbase:(check base) ~cfam:(fun _ -> check fam)
@@ -66,16 +65,17 @@ and check ?(fallback_infer=true) tm : Rule.check =
     R.Univ.univ (check_shift s)
   | _ when fallback_infer ->
     begin
-      Rule.Check.peek @@ fun ~tp ->
+      Rule.Check.peek @@ fun goal ->
       Rule.Check.orelse (Rule.Check.infer (infer tm)) @@ fun err ->
-      match err, tp with
+      match err, goal.tp with
       | NotInferable _, D.Unfold _ ->
         Rule.Check.forcing @@ check ~fallback_infer:false tm
       | _ ->
-        RefineEffect.ill_typed ~tm ~tp
+        RefineEffect.ill_typed ~tm ~tp:goal.tp
     end
   | _ ->
-    RefineEffect.ill_typed ~tm ~tp
+    Rule.Check.peek @@ fun goal ->
+    RefineEffect.ill_typed ~tm ~tp:goal.tp
 
 
 (* the public interface *)
@@ -84,20 +84,25 @@ let infer_top tm =
   RefineEffect.trap @@ fun () ->
   let tm, tp =
     RefineEffect.with_top_env @@ fun () ->
-    let tm, tp = Rule.Infer.run @@ infer tm in tm, RefineEffect.quote tp
+    let tm, tp = Rule.Infer.run {lhs = LHS.unknown} @@ infer tm in
+    tm, RefineEffect.quote tp
   in
   S.lam tm, NbE.eval_top (S.vir_pi S.tp_ulvl tp)
 
 let check_tp_top tp =
   RefineEffect.trap @@ fun () ->
-  let tp = RefineEffect.with_top_env @@ fun () -> Rule.Check.run ~tp:D.univ_top @@ check tp in
+  let tp =
+    RefineEffect.with_top_env @@ fun () ->
+    Rule.Check.run {tp = D.univ_top; lhs = LHS.unknown} @@ check tp
+  in
   S.vir_pi S.tp_ulvl tp
 
 let check_top tm ~tp =
   RefineEffect.trap @@ fun () ->
   S.lam @@
   RefineEffect.with_top_env @@ fun () ->
-  Rule.Check.run ~tp:(NbE.app_ulvl ~tp ~ulvl:(RefineEffect.blessed_ulvl ())) @@ check tm
+  let ulvl = Rule.Shift.run @@ R.Shift.base in
+  Rule.Check.run {tp = NbE.app_ulvl ~tp ~ulvl; lhs = LHS.unknown} @@ check tm
 
 type handler = RefineEffect.handler = { resolve : CS.name -> ResolveData.t }
 let run = RefineEffect.run

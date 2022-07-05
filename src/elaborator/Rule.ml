@@ -7,49 +7,44 @@ type 'a binder = hyp -> 'a
 
 module Hyp = RefineEffect.Cell
 
-module Infer : sig
-  type t
-  val rule : (unit -> NbE.Syntax.t * NbE.Domain.t) -> t
-  val run : t -> NbE.Syntax.t * NbE.Domain.t
-end =
+module Infer =
 struct
-  type t = unit -> S.t * D.t
+  type goal = {lhs : LHS.t}
+  type result = S.t * D.t
+
+  type t = goal -> result
   let rule t = t
-  let run t = t ()
+  let run goal t = t goal
 end
 
 type infer = Infer.t
 
-module Check : sig
-  type t
-
-  val rule : (tp:NbE.Domain.t -> NbE.Syntax.t) -> t
-
-  val run : tp:NbE.Domain.t -> t -> NbE.Syntax.t
-  val peek : (tp:NbE.Domain.t -> t) -> t
-  val orelse : t -> (Errors.t -> t) -> t
-  val infer : infer -> t
-  val forcing : t -> t
-end =
+module Check =
 struct
-  type t = tp:D.t -> S.t
+  type goal = {tp : D.t; lhs : LHS.t}
+  type result = S.t
+
+  type t = goal -> result
 
   let rule t = t
-  let run ~tp t = t ~tp
-  let peek t ~tp = t ~tp ~tp
+  let run goal t = t goal
+  let peek t goal = t goal goal
 
-  let forcing (t : t) : t = fun ~tp ->
-    t ~tp:(NbE.force_all tp)
+  let forcing (t : t) : t =
+    fun goal ->
+    t {goal with tp = NbE.force_all goal.tp}
 
-  let infer (inf : infer) : t = fun ~tp ->
-    let tm', tp' = Infer.run inf in
-    try RefineEffect.equate tp' `LE tp; tm' with
-    | NbE.Unequal -> RefineEffect.not_convertible tp tp'
+  let infer (inf : infer) : t =
+    fun goal ->
+    let tm', tp' = Infer.run Infer.{lhs = goal.lhs} inf in
+    try RefineEffect.equate tp' `LE goal.tp; tm' with
+    | NbE.Unequal -> RefineEffect.not_convertible goal.tp tp'
 
-  let orelse t k : t = fun ~tp ->
-    try t ~tp with
+  let orelse t k : t =
+    fun goal ->
+    try t goal with
     | RefineEffect.Error err ->
-      k err ~tp
+      k err goal
 
 end
 
