@@ -1,5 +1,5 @@
 module Errors : module type of Errors
-module Eff : module type of RefineEffect
+module Eff : module type of Eff
 module ResolveData : module type of ResolveData
 
 module Rule : sig

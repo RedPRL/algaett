@@ -36,8 +36,8 @@ struct
   let infer (inf : infer) : t =
     fun goal ->
     let tm', tp' = Infer.run Infer.{lhs = goal.lhs} inf in
-    try RefineEffect.equate tp' `LE goal.tp; tm' with
-    | NbE.Unequal -> RefineEffect.not_convertible goal.tp tp'
+    try Eff.equate tp' `LE goal.tp; tm' with
+    | NbE.Unequal -> Eff.not_convertible goal.tp tp'
 
   let orelse t k : t =
     fun goal ->
