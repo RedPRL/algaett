@@ -25,7 +25,7 @@ end
 
 module Structural :
 sig
-  val local_var : NbE.Domain.cell -> infer
+  val local_var : hyp -> infer
   val global_var : Yuujinchou.Trie.path -> shift -> infer
   val ann : ctp:check -> ctm:check -> infer
 end
