@@ -9,14 +9,14 @@ module Eff = RefineEffect
 module Rule = Rule
 module R = Rule
 
-module Shift =
+module ULvl =
 struct
-
   let shifted t i =
     R.Shift.rule @@ fun () ->
     D.ULvl.shifted (R.Shift.run t) (NbE.ULvl.Shift.of_int i)
 
-  let base = R.Shift.rule RefineEffect.blessed_ulvl
+  let base =
+    R.Shift.rule RefineEffect.blessed_ulvl
 end
 
 module Structural =

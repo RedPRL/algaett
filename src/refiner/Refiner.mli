@@ -1,11 +1,23 @@
-open Rule
-
 module Errors : module type of Errors
 module Eff : module type of RefineEffect
 module ResolveData : module type of ResolveData
-module Rule : module type of Rule
 
-module Shift :
+module Rule : sig
+  type infer
+  type shift
+  type check
+  type hyp = NbE.Domain.cell
+
+  type 'a binder = hyp -> 'a
+
+  module Infer : Sigs.InferPublic with type t = infer
+  module Check : Sigs.CheckPublic with type t = check and type infer := Infer.t
+  module Shift : Sigs.ShiftPublic with type t = shift
+end
+
+open Rule
+
+module ULvl :
 sig
   val base : shift
   val shifted : shift -> int -> shift

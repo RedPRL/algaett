@@ -15,12 +15,12 @@ let ill_typed ~tm ~tp = raise (Error (IllTyped {tm; tp}))
 let check_shift (s : CS.shift list option) : Refiner.Rule.shift =
   match s with
   | None ->
-    R.Shift.base
+    R.ULvl.base
   | Some ss ->
     List.fold_right
-      (fun (CS.Translate i) l -> R.Shift.shifted l i)
+      (fun (CS.Translate i) l -> R.ULvl.shifted l i)
       ss
-      R.Shift.base
+      R.ULvl.base
 
 let infer_var p s : R.Rule.infer =
   match R.Eff.resolve_local p, s with
@@ -109,7 +109,7 @@ let check_top lhs tm ~tp =
   trap @@ fun () ->
   S.lam @@
   R.Eff.with_top_env @@ fun () ->
-  let ulvl = R.Rule.Shift.run @@ R.Shift.base in
+  let ulvl = R.Rule.Shift.run @@ R.ULvl.base in
   R.Rule.Check.run {tp = NbE.app_ulvl ~tp ~ulvl; lhs} @@ check tm
 
 type handler = R.Eff.handler = { resolve : CS.name -> R.ResolveData.t }

@@ -44,7 +44,6 @@ struct
     try t goal with
     | exn ->
       k exn goal
-
 end
 
 type check = Check.t
