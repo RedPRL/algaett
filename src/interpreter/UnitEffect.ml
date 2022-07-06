@@ -72,10 +72,10 @@ let run_scope f =
 let run_checker f =
   Elaborator.run f
     { resolve =
-        (fun p ->
-           match S.resolve p with
-           | None -> not_in_scope p
-           | Some (data, tag) -> Used.use tag; data) }
+        fun p ->
+          match S.resolve p with
+          | None -> not_in_scope p
+          | Some (data, tag) -> Used.use tag; data }
 
 let run f h =
   Effect.Deep.try_with
@@ -83,10 +83,13 @@ let run f h =
     { effc =
         fun (type a) (eff : a Effect.t) ->
           match eff with
-          | Load p -> Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
+          | Load p ->
+            Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
             Algaeff.Fun.Deep.finally k @@ fun () -> h.load p
-          | Preload p -> Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
+          | Preload p ->
+            Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
             Algaeff.Fun.Deep.finally k @@ fun () -> h.preload p
-          | WarnUnused i -> Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
+          | WarnUnused i ->
+            Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
             Algaeff.Fun.Deep.finally k @@ fun () -> h.warn_unused i
           | _ -> None }
