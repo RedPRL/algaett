@@ -1,6 +1,7 @@
 module ULvl = ULvl
 module Domain = Domain
 module Syntax = Syntax
+module LHS = LHS
 
 let inst_clo = Semantics.inst_clo
 let inst_clo' = Semantics.inst_clo'

@@ -1,10 +1,8 @@
 open Bwd
 open BwdNotation
 
-type cell = RefineEffect.cell
-
 type frame =
-  | Ap of cell
+  | Ap of Domain.cell
   | Fst
   | Snd
 

@@ -6,7 +6,6 @@ module UL = NbE.ULvl
 module Syntax = CS
 module Errors = Errors
 module ResolveData = ResolveData
-module LHS = LHS
 
 module R = Refiner
 

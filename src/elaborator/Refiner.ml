@@ -1,10 +1,10 @@
 module S = NbE.Syntax
 module D = NbE.Domain
 module UL = NbE.ULvl
+module LHS = NbE.LHS
 
 module Errors = Errors
 module ResolveData = ResolveData
-module Hyp = RefineEffect.Cell
 
 module R = Rule
 
@@ -20,9 +20,9 @@ end
 
 module Structural =
 struct
-  let local_var cell =
+  let local_var (cell : D.cell) =
     R.Infer.rule @@ fun _ ->
-    RefineEffect.quote cell.RefineEffect.tm, cell.RefineEffect.tp
+    RefineEffect.quote cell.tm, cell.tp
 
   let global_var path shift =
     R.Infer.rule @@ fun _ ->
@@ -130,7 +130,7 @@ struct
     match goal.tp with
     | D.Pi (base, fam) | D.VirPi (base, fam) ->
       RefineEffect.bind ~name ~tp:base @@ fun arg ->
-      let fib = NbE.inst_clo' fam @@ Hyp.tm arg in
+      let fib = NbE.inst_clo' fam @@ arg.D.tm in
       S.lam @@ R.Check.run {tp = fib; lhs = LHS.app goal.lhs arg} @@ cbnd arg
     | _ ->
       invalid_arg "lam"

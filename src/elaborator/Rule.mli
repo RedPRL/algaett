@@ -1,13 +1,13 @@
 type infer
 type shift
 type check
-type hyp = RefineEffect.cell
+type hyp = NbE.Domain.cell
 
 type 'a binder = hyp -> 'a
 
 module Infer :
 sig
-  type goal = {lhs : LHS.t}
+  type goal = {lhs : NbE.LHS.t}
   type result = NbE.Syntax.t * NbE.Domain.t
 
   type t = infer
@@ -18,7 +18,7 @@ end
 
 module Check :
 sig
-  type goal = {tp : NbE.Domain.t; lhs : LHS.t}
+  type goal = {tp : NbE.Domain.t; lhs : NbE.LHS.t}
   type result = NbE.Syntax.t
 
   type t = check

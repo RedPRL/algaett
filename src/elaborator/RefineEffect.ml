@@ -12,15 +12,6 @@ let resolve p = Effect.perform (Resolve p)
 
 exception Error of Errors.t
 
-type cell = {tm : D.t; tp : D.t}
-
-module Cell =
-struct
-  type t = cell
-  let tm x = x.tm
-  let tp x = x.tp
-end
-
 let not_inferable ~tm = raise (Error (NotInferable {tm}))
 
 let ill_typed ~tm ~tp = raise (Error (IllTyped {tm; tp}))
@@ -30,7 +21,7 @@ let trap f = try Result.ok (f ()) with Error e -> Result.error e
 
 type env = {
   blessed_ulvl : D.t;
-  local_names : (cell, unit) Yuujinchou.Trie.t;
+  local_names : (D.cell, unit) Yuujinchou.Trie.t;
   locals : D.t Lazy.t bwd;
   size : int;
 }
@@ -61,7 +52,7 @@ let resolve_local p = Yuujinchou.Trie.find_singleton p (Eff.read()).local_names
 
 let bind ~name ~tp f =
   let arg = D.lvl (Eff.read()).size in
-  let cell = {tm = arg; tp} in
+  let cell = D.{tm = arg; tp} in
   let update env =
     {blessed_ulvl = env.blessed_ulvl;
      size = env.size + 1;

@@ -1,11 +1,10 @@
 module S = NbE.Syntax
 module D = NbE.Domain
 module UL = NbE.ULvl
+module LHS = NbE.LHS
 
-type hyp = RefineEffect.cell
+type hyp = D.cell
 type 'a binder = hyp -> 'a
-
-module Hyp = RefineEffect.Cell
 
 module Infer =
 struct

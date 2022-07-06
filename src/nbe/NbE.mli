@@ -1,6 +1,7 @@
 module Syntax : module type of Syntax
 module Domain : module type of Domain
 module ULvl : module type of ULvl
+module LHS : module type of LHS
 
 val inst_clo : Domain.closure -> Domain.t Lazy.t -> Domain.t
 val inst_clo' : Domain.closure -> Domain.t -> Domain.t

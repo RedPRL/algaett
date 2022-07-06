@@ -36,6 +36,7 @@ type frame = Data.frame =
   | Snd
 
 type t = con
+type cell = {tm : t; tp : t}
 
 let lvl l = Cut (Lvl l, Emp)
 let def p v = Unfold (Def (p, v), Emp, v)

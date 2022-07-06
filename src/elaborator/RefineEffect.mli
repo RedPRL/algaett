@@ -1,22 +1,13 @@
-type cell = {tm : NbE.Domain.t; tp : NbE.Domain.t}
-
-module Cell :
-sig
-  type t = cell
-  val tm : t -> NbE.Domain.t
-  val tp : t -> NbE.Domain.t
-end
-
 exception Error of Errors.t
 
-val bind : name:Syntax.name option -> tp:NbE.Domain.t -> (cell -> 'a) -> 'a
+val bind : name:Syntax.name option -> tp:NbE.Domain.t -> (NbE.Domain.cell -> 'a) -> 'a
 
 val trap : (unit -> 'a) -> ('a, Errors.t) Result.t
 
 val blessed_ulvl : unit -> NbE.Domain.t
 
 val resolve : Syntax.name -> ResolveData.t
-val resolve_local : Syntax.name -> (cell * unit) option
+val resolve_local : Syntax.name -> (NbE.Domain.cell * unit) option
 
 (** invariant: the return values must be effect-less *)
 val eval : NbE.Syntax.t -> NbE.Domain.t
