@@ -2,7 +2,7 @@ module Errors : module type of Errors
 module Eff : module type of Eff
 module ResolveData : module type of ResolveData
 
-module Rule : sig
+module Tactic : sig
   type infer
   type shift
   type check
@@ -15,7 +15,7 @@ module Rule : sig
   module Shift : Sigs.ShiftPublic with type t = shift
 end
 
-open Rule
+open Tactic
 
 module ULvl :
 sig

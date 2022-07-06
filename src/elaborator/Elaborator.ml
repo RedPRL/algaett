@@ -12,7 +12,7 @@ exception Error of Errors.t
 let not_inferable ~tm = raise (Error (NotInferable {tm}))
 let ill_typed ~tm ~tp = raise (Error (IllTyped {tm; tp}))
 
-let check_shift (s : CS.shift list option) : Refiner.Rule.shift =
+let check_shift (s : CS.shift list option) : Refiner.Tactic.shift =
   match s with
   | None ->
     R.ULvl.base
@@ -22,7 +22,7 @@ let check_shift (s : CS.shift list option) : Refiner.Rule.shift =
       ss
       R.ULvl.base
 
-let infer_var p s : R.Rule.infer =
+let infer_var p s : R.Tactic.infer =
   match R.Eff.resolve_local p, s with
   | Some (cell, ()), None ->
     R.Structural.local_var cell
@@ -32,7 +32,7 @@ let infer_var p s : R.Rule.infer =
   | None, _ ->
     R.Structural.global_var p (check_shift s)
 
-let rec infer tm : R.Rule.infer =
+let rec infer tm : R.Tactic.infer =
   match tm.CS.node with
   | CS.Var (p, s) ->
     infer_var p s
@@ -52,7 +52,7 @@ let rec infer tm : R.Rule.infer =
    we try to check things without unfolding the type, and then we unfold the type
    if type inference also fails. During the second round, we do not want to try
    the type inference again becouse it will have already failed once. *)
-and check ?(fallback_infer=true) tm : R.Rule.check =
+and check ?(fallback_infer=true) tm : R.Tactic.check =
   match tm.CS.node with
   | CS.Pi (base, name, fam) ->
     R.Pi.pi ~name ~cbase:(check base) ~cfam:(fun _ -> check fam)
@@ -68,16 +68,16 @@ and check ?(fallback_infer=true) tm : R.Rule.check =
     R.Univ.univ (check_shift s)
   | _ when fallback_infer ->
     begin
-      R.Rule.Check.peek @@ fun goal ->
-      R.Rule.Check.orelse (R.Rule.Check.infer (infer tm)) @@ fun exn ->
+      R.Tactic.Check.peek @@ fun goal ->
+      R.Tactic.Check.orelse (R.Tactic.Check.infer (infer tm)) @@ fun exn ->
       match exn, goal.tp with
       | Error NotInferable _, D.Unfold _ ->
-        R.Rule.Check.forcing @@ check ~fallback_infer:false tm
+        R.Tactic.Check.forcing @@ check ~fallback_infer:false tm
       | _ ->
         ill_typed ~tm ~tp:goal.tp
     end
   | _ ->
-    R.Rule.Check.peek @@ fun goal ->
+    R.Tactic.Check.peek @@ fun goal ->
     ill_typed ~tm ~tp:goal.tp
 
 
@@ -92,7 +92,7 @@ let infer_top lhs tm =
   trap @@ fun () ->
   let tm, tp =
     R.Eff.with_top_env @@ fun () ->
-    let tm, tp = R.Rule.Infer.run {lhs} @@ infer tm in
+    let tm, tp = R.Tactic.Infer.run {lhs} @@ infer tm in
     tm, R.Eff.quote tp
   in
   S.lam tm, NbE.eval_top @@ S.vir_pi S.tp_ulvl tp
@@ -101,7 +101,7 @@ let check_tp_top lhs tp =
   trap @@ fun () ->
   let tp =
     R.Eff.with_top_env @@ fun () ->
-    R.Rule.Check.run {tp = D.univ_top; lhs} @@ check tp
+    R.Tactic.Check.run {tp = D.univ_top; lhs} @@ check tp
   in
   S.vir_pi S.tp_ulvl tp
 
@@ -109,8 +109,8 @@ let check_top lhs tm ~tp =
   trap @@ fun () ->
   S.lam @@
   R.Eff.with_top_env @@ fun () ->
-  let ulvl = R.Rule.Shift.run @@ R.ULvl.base in
-  R.Rule.Check.run {tp = NbE.app_ulvl ~tp ~ulvl; lhs} @@ check tm
+  let ulvl = R.Tactic.Shift.run @@ R.ULvl.base in
+  R.Tactic.Check.run {tp = NbE.app_ulvl ~tp ~ulvl; lhs} @@ check tm
 
 type handler = R.Eff.handler = { resolve : CS.name -> R.ResolveData.t }
 let run = R.Eff.run
