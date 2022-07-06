@@ -27,3 +27,17 @@ sig
   type t
   val run : t -> NbE.Domain.t
 end
+
+module type TacticPublic =
+sig
+  type infer
+  type shift
+  type check
+  type hyp = NbE.Domain.cell
+
+  type 'a binder = hyp -> 'a
+
+  module Infer : InferPublic with type t = infer
+  module Check : CheckPublic with type t = check and type infer := Infer.t
+  module Shift : ShiftPublic with type t = shift
+end
