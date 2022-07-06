@@ -80,7 +80,8 @@ let run_checker f =
 let run f h =
   Effect.Deep.try_with
     run_used (fun () -> run_scope @@ fun () -> run_checker f)
-    { effc = fun (type a) (eff : a Effect.t) ->
+    { effc =
+        fun (type a) (eff : a Effect.t) ->
           match eff with
           | Load p -> Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
             Algaeff.Fun.Deep.finally k @@ fun () -> h.load p

@@ -7,11 +7,11 @@ module UL = NbE.ULvl
 
 type _ Effect.t += Resolve : Yuujinchou.Trie.path -> ResolveData.t Effect.t
 
-let resolve p = Effect.perform (Resolve p)
+let resolve p = Effect.perform @@ Resolve p
 
 exception Error of Errors.t
 
-let not_convertible u v= raise (Error (Conversion (u, v)))
+let not_convertible u v = raise @@ Error (Conversion (u, v))
 
 let trap f = try Result.ok (f ()) with Error e -> Result.error e
 

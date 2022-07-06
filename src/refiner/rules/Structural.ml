@@ -1,10 +1,10 @@
 open RuleKit
 
-let local_var (cell : D.cell) =
+let local_var (cell : D.cell) : T.infer =
   T.Infer.rule @@ fun _ ->
   Eff.quote cell.tm, cell.tp
 
-let global_var path shift =
+let global_var path shift : T.infer =
   T.Infer.rule @@ fun _ ->
   let ulvl = T.Shift.run shift in
   let tm, tp =

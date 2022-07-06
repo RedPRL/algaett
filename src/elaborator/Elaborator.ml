@@ -87,7 +87,6 @@ let trap (f : unit -> 'a) : ('a, Errors.t) Result.t =
   R.Eff.trap f |> Result.map_error @@ function
   | R.Errors.Conversion (u, v) -> Errors.Conversion (u, v)
 
-
 let infer_top lhs tm =
   trap @@ fun () ->
   let tm, tp =
