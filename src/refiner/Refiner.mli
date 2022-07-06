@@ -1,5 +1,10 @@
 open Rule
 
+module Errors : module type of Errors
+module Eff : module type of RefineEffect
+module ResolveData : module type of ResolveData
+module Rule : module type of Rule
+
 module Shift :
 sig
   val base : shift

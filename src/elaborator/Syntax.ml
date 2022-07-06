@@ -57,6 +57,7 @@ let dump_shifts fmt ss =
 
 let rec dump fmt =
   dump_node dump_ fmt
+
 and dump_ fmt =
   function
   | Ann {tm; tp} ->

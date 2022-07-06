@@ -5,7 +5,8 @@ module LHS = NbE.LHS
 
 module Errors = Errors
 module ResolveData = ResolveData
-
+module Eff = RefineEffect
+module Rule = Rule
 module R = Rule
 
 module Shift =

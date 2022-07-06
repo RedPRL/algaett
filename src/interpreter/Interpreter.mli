@@ -2,8 +2,8 @@ module Syntax : module type of Syntax
 
 type error =
   | NotInScope of Yuujinchou.Trie.path
-  | NotInferable of {tm: Syntax.t}
-  | IllTyped of {tm: Syntax.t; tp: NbE.Domain.t}
+  | NotInferable of {tm : Syntax.t}
+  | IllTyped of {tm : Syntax.t; tp : NbE.Domain.t}
   | Conversion of NbE.Domain.t * NbE.Domain.t
 
 val execute : Syntax.prog -> (unit, error) result
@@ -13,7 +13,7 @@ type unused_info =
   | Local of Yuujinchou.Trie.path Elaborator.Syntax.node
 
 type handler =
-  { load : Bantorra.Manager.path -> Elaborator.ResolveData.t Yuujinchou.Trie.Untagged.t;
+  { load : Bantorra.Manager.path -> Refiner.ResolveData.t Yuujinchou.Trie.Untagged.t;
     preload : Bantorra.Manager.path -> unit;
     warn_unused : unused_info -> unit }
 

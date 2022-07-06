@@ -1,7 +1,6 @@
 open Bwd
 open BwdNotation
 
-module CS = Syntax
 module S = NbE.Syntax
 module D = NbE.Domain
 module UL = NbE.ULvl
@@ -12,9 +11,6 @@ let resolve p = Effect.perform (Resolve p)
 
 exception Error of Errors.t
 
-let not_inferable ~tm = raise (Error (NotInferable {tm}))
-
-let ill_typed ~tm ~tp = raise (Error (IllTyped {tm; tp}))
 let not_convertible u v= raise (Error (Conversion (u, v)))
 
 let trap f = try Result.ok (f ()) with Error e -> Result.error e

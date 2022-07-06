@@ -1,0 +1,4 @@
+(library
+ (name Refiner)
+ (libraries bwd algaeff mugen yuujinchou algaett.nbe)
+ (public_name algaett.refiner))

@@ -42,8 +42,8 @@ struct
   let orelse t k : t =
     fun goal ->
     try t goal with
-    | RefineEffect.Error err ->
-      k err goal
+    | exn ->
+      k exn goal
 
 end
 

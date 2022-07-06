@@ -1,15 +1,18 @@
+module Syntax = Syntax
+module Errors = Errors
+
 module CS = Syntax
 module S = NbE.Syntax
 module D = NbE.Domain
 module UL = NbE.ULvl
-
-module Syntax = CS
-module Errors = Errors
-module ResolveData = ResolveData
-
 module R = Refiner
 
-let check_shift (s : CS.shift list option) : Rule.shift =
+exception Error of Errors.t
+
+let not_inferable ~tm = raise (Error (NotInferable {tm}))
+let ill_typed ~tm ~tp = raise (Error (IllTyped {tm; tp}))
+
+let check_shift (s : CS.shift list option) : Refiner.Rule.shift =
   match s with
   | None ->
     R.Shift.base
@@ -19,17 +22,17 @@ let check_shift (s : CS.shift list option) : Rule.shift =
       ss
       R.Shift.base
 
-let infer_var p s : Rule.infer =
-  match RefineEffect.resolve_local p, s with
+let infer_var p s : R.Rule.infer =
+  match R.Eff.resolve_local p, s with
   | Some (cell, ()), None ->
     R.Structural.local_var cell
   | Some _, Some _ ->
     Format.eprintf "@[<2>Local@ variable@ %a@ could@ not@ have@ level@ shifting@]@." Syntax.dump_name p;
-    RefineEffect.not_inferable ~tm:{node = CS.Var (p, s); loc = None}
+    not_inferable ~tm:{node = CS.Var (p, s); loc = None}
   | None, _ ->
     R.Structural.global_var p (check_shift s)
 
-let rec infer tm : Rule.infer =
+let rec infer tm : R.Rule.infer =
   match tm.CS.node with
   | CS.Var (p, s) ->
     infer_var p s
@@ -43,13 +46,13 @@ let rec infer tm : Rule.infer =
     R.Sigma.snd ~itm:(infer tm)
   | _ ->
     (* Format.eprintf "@[<2>Could@ not@ infer@ the@ type@ of@ %a@]@." Syntax.dump tm; *)
-    RefineEffect.not_inferable ~tm
+    not_inferable ~tm
 
 (* The [fallback_infer] parameter is for the two-stage type checking: first round,
    we try to check things without unfolding the type, and then we unfold the type
    if type inference also fails. During the second round, we do not want to try
    the type inference again becouse it will have already failed once. *)
-and check ?(fallback_infer=true) tm : Rule.check =
+and check ?(fallback_infer=true) tm : R.Rule.check =
   match tm.CS.node with
   | CS.Pi (base, name, fam) ->
     R.Pi.pi ~name ~cbase:(check base) ~cfam:(fun _ -> check fam)
@@ -65,45 +68,50 @@ and check ?(fallback_infer=true) tm : Rule.check =
     R.Univ.univ (check_shift s)
   | _ when fallback_infer ->
     begin
-      Rule.Check.peek @@ fun goal ->
-      Rule.Check.orelse (Rule.Check.infer (infer tm)) @@ fun err ->
-      match err, goal.tp with
-      | NotInferable _, D.Unfold _ ->
-        Rule.Check.forcing @@ check ~fallback_infer:false tm
+      R.Rule.Check.peek @@ fun goal ->
+      R.Rule.Check.orelse (R.Rule.Check.infer (infer tm)) @@ fun exn ->
+      match exn, goal.tp with
+      | Error NotInferable _, D.Unfold _ ->
+        R.Rule.Check.forcing @@ check ~fallback_infer:false tm
       | _ ->
-        RefineEffect.ill_typed ~tm ~tp:goal.tp
+        ill_typed ~tm ~tp:goal.tp
     end
   | _ ->
-    Rule.Check.peek @@ fun goal ->
-    RefineEffect.ill_typed ~tm ~tp:goal.tp
+    R.Rule.Check.peek @@ fun goal ->
+    ill_typed ~tm ~tp:goal.tp
 
 
 (* the public interface *)
 
+let trap (f : unit -> 'a) : ('a, Errors.t) Result.t =
+  R.Eff.trap f |> Result.map_error @@ function
+  | R.Errors.Conversion (u, v) -> Errors.Conversion (u, v)
+
+
 let infer_top lhs tm =
-  RefineEffect.trap @@ fun () ->
+  trap @@ fun () ->
   let tm, tp =
-    RefineEffect.with_top_env @@ fun () ->
-    let tm, tp = Rule.Infer.run {lhs} @@ infer tm in
-    tm, RefineEffect.quote tp
+    R.Eff.with_top_env @@ fun () ->
+    let tm, tp = R.Rule.Infer.run {lhs} @@ infer tm in
+    tm, R.Eff.quote tp
   in
-  S.lam tm, NbE.eval_top (S.vir_pi S.tp_ulvl tp)
+  S.lam tm, NbE.eval_top @@ S.vir_pi S.tp_ulvl tp
 
 let check_tp_top lhs tp =
-  RefineEffect.trap @@ fun () ->
+  trap @@ fun () ->
   let tp =
-    RefineEffect.with_top_env @@ fun () ->
-    Rule.Check.run {tp = D.univ_top; lhs} @@ check tp
+    R.Eff.with_top_env @@ fun () ->
+    R.Rule.Check.run {tp = D.univ_top; lhs} @@ check tp
   in
   S.vir_pi S.tp_ulvl tp
 
 let check_top lhs tm ~tp =
-  RefineEffect.trap @@ fun () ->
+  trap @@ fun () ->
   S.lam @@
-  RefineEffect.with_top_env @@ fun () ->
-  let ulvl = Rule.Shift.run @@ R.Shift.base in
-  Rule.Check.run {tp = NbE.app_ulvl ~tp ~ulvl; lhs} @@ check tm
+  R.Eff.with_top_env @@ fun () ->
+  let ulvl = R.Rule.Shift.run @@ R.Shift.base in
+  R.Rule.Check.run {tp = NbE.app_ulvl ~tp ~ulvl; lhs} @@ check tm
 
-type handler = RefineEffect.handler = { resolve : CS.name -> ResolveData.t }
-let run = RefineEffect.run
-let perform = RefineEffect.perform
+type handler = R.Eff.handler = { resolve : CS.name -> R.ResolveData.t }
+let run = R.Eff.run
+let perform = R.Eff.perform

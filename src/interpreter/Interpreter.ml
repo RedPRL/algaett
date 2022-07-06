@@ -13,7 +13,7 @@ type unused_info = Used.info =
   | Local of Yuujinchou.Trie.path Elaborator.Syntax.node
 
 type handler = UnitEffect.handler =
-  { load : Bantorra.Manager.path -> Elaborator.ResolveData.t Yuujinchou.Trie.Untagged.t;
+  { load : Bantorra.Manager.path -> Refiner.ResolveData.t Yuujinchou.Trie.Untagged.t;
     preload : Bantorra.Manager.path -> unit;
     warn_unused : Used.info -> unit }
 

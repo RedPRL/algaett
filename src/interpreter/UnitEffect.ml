@@ -1,7 +1,7 @@
 type error =
   | NotInScope of Yuujinchou.Trie.path
-  | NotInferable of {tm: Syntax.t}
-  | IllTyped of {tm: Syntax.t; tp: NbE.Domain.t}
+  | NotInferable of {tm : Syntax.t}
+  | IllTyped of {tm : Syntax.t; tp : NbE.Domain.t}
   | Conversion of NbE.Domain.t * NbE.Domain.t
 
 exception Error of error
@@ -19,12 +19,12 @@ let reraise_elaborator =
 let not_in_scope n = raise (Error (NotInScope n))
 
 type _ Effect.t +=
-  | Load : Bantorra.Manager.path -> Elaborator.ResolveData.t Yuujinchou.Trie.Untagged.t Effect.t
+  | Load : Bantorra.Manager.path -> Refiner.ResolveData.t Yuujinchou.Trie.Untagged.t Effect.t
   | Preload : Bantorra.Manager.path -> unit Effect.t
   | WarnUnused : Used.info -> unit Effect.t
 
 type handler =
-  { load : Bantorra.Manager.path -> Elaborator.ResolveData.t Yuujinchou.Trie.Untagged.t;
+  { load : Bantorra.Manager.path -> Refiner.ResolveData.t Yuujinchou.Trie.Untagged.t;
     preload : Bantorra.Manager.path -> unit;
     warn_unused : Used.info -> unit }
 
@@ -38,7 +38,7 @@ let perform : handler = { load; preload; warn_unused }
 
 module S = Yuujinchou.Scope.Make
     (struct
-      type data = Elaborator.ResolveData.t
+      type data = Refiner.ResolveData.t
       type tag = Used.id
       type hook = Syntax.empty
       type context = Syntax.empty

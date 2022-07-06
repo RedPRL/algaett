@@ -26,7 +26,7 @@ sig
   val run : goal -> t -> result
 
   val peek : (goal -> t) -> t
-  val orelse : t -> (Errors.t -> t) -> t
+  val orelse : t -> (exn -> t) -> t
   val infer : infer -> t
   val forcing : t -> t
 end
