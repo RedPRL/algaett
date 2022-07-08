@@ -12,7 +12,7 @@ let rec execute_decl {CS.node = decl; CS.loc = loc} =
   match decl with
   | CS.Axiom {name; tp} ->
     let tp = NbE.eval_top @@ UE.reraise_elaborator @@ Elaborator.check_tp_top NbE.LHS.unknown tp in
-    include_singleton ?loc name @@ Axiom {tp}
+    include_singleton ?loc (name : CS.bound_name) @@ Axiom {tp}
   | CS.Def {name; tm} ->
     let lhs = Option.fold ~none:NbE.LHS.unknown ~some:NbE.LHS.head name in
     let tm, tp = UE.reraise_elaborator @@ Elaborator.infer_top lhs tm in

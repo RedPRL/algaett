@@ -55,55 +55,77 @@ module S =
       type context = Syntax.empty
     end)
 
+
 let include_singleton ?loc (p, data) =
   let id = Used.new_ (Used.Local {node = p; loc}) in
   S.include_singleton (p, (data, id))
 
-let section p = S.section p
+let section p =
+  S.section p
 
-let get_export () = Yuujinchou.Trie.Untagged.untag @@ S.get_export ()
+let get_export () =
+  Yuujinchou.Trie.Untagged.untag @@
+  S.get_export ()
 
 let import ?loc u m =
   let id = Used.new_ (Imported {node = u; loc}) in
   let u = S.modify m @@ Yuujinchou.Trie.retag id @@ load u in
   S.import_subtree ([], u)
 
-module UsedHandler =
-struct
-  let warn_unused = warn_unused
-end
-
-let run_used f =
-  let module R = Used.Run (UsedHandler) in
-  R.run f
-
-let run_scope f =
-  S.run
-    (fun () ->
-       let ans = f () in
-       Seq.iter Used.use @@ Yuujinchou.Trie.set_of_tags Used.compare_id @@ S.get_export ();
-       ans)
-    { not_found = (fun _ _ -> ());
-      shadow = (fun _ _ _ y -> y);
-      hook = (fun _ _ -> function _ -> .) }
-
-module ElaboratorHandler =
-struct
-  let resolve p =
-    match S.resolve p with
-    | None -> not_in_scope p
-    | Some (data, tag) -> Used.use tag; data
-end
-
-let run_checker f =
-  let module R = Elaborator.Run (ElaboratorHandler) in
-  R.run f
-
 module Run (H : Handler) =
 struct
+  module UsedHandler =
+  struct
+    let warn_unused = warn_unused
+  end
+
+  let run_used f =
+    let module R = Used.Run (UsedHandler) in
+    R.run f
+
+  let run_scope f =
+    S.run
+      (fun () ->
+         let ans = f () in
+         Seq.iter Used.use @@ Yuujinchou.Trie.set_of_tags Used.compare_id @@ S.get_export ();
+         ans)
+      { not_found = (fun _ _ -> ());
+        shadow = (fun _ _ _ y -> y);
+        hook = (fun _ _ -> function _ -> .) }
+
+  module ElaboratorHandler : Elaborator.Handler =
+  struct
+    let counter = ref 0
+
+    let resolve p =
+      match S.resolve p with
+      | None -> not_in_scope p
+      | Some (data, tag) -> Used.use tag; data
+
+    let unleash (name : Syntax.bound_name) data =
+      let p =
+        match name with
+        | Some p -> p
+        | None ->
+          let i = !counter in
+          counter := i + 1;
+          ["_"; Int.to_string i]
+      in
+      include_singleton (p, data)
+  end
+
+  let run_elab f =
+    let module R = Elaborator.Run (ElaboratorHandler) in
+    R.run f
+
+  let prerun f =
+    run_used @@ fun () ->
+    run_scope @@ fun () ->
+    run_elab f
+
   let run f =
     Effect.Deep.try_with
-      run_used (fun () -> run_scope @@ fun () -> run_checker f)
+      prerun f
       { effc =
           fun (type a) (eff : a Effect.t) ->
             match eff with

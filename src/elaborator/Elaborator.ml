@@ -9,8 +9,11 @@ module R = Refiner
 
 exception Error of Errors.t
 
-let not_inferable ~tm = raise (Error (NotInferable {tm}))
-let ill_typed ~tm ~tp = raise (Error (IllTyped {tm; tp}))
+type _ Effect.t += Unleash : CS.bound_name * R.ResolveData.t -> unit Effect.t
+let unleash p data = Effect.perform @@ Unleash (p, data)
+
+let not_inferable ~tm = raise @@ Error (NotInferable {tm})
+let ill_typed ~tm ~tp = raise @@ Error (IllTyped {tm; tp})
 
 let check_shift (s : CS.shift list option) : Refiner.Tactic.shift =
   match s with
@@ -111,6 +114,32 @@ let check_top lhs tm ~tp =
   let ulvl = R.Tactic.Shift.run @@ R.ULvl.base in
   R.Tactic.Check.run {tp = NbE.app_ulvl ~tp ~ulvl; lhs} @@ check tm
 
-module type Handler = R.Eff.Handler
-module Run = R.Eff.Run
-module Perform = R.Eff.Perform
+module type Handler =
+sig
+  include Refiner.Eff.Handler
+  val unleash : CS.bound_name -> Refiner.ResolveData.t -> unit
+end
+
+module Run (H : Handler) =
+struct
+  let run_refiner f =
+    let module Run = R.Eff.Run (H) in
+    Run.run f
+
+  let run f =
+    Effect.Deep.try_with
+      run_refiner f
+      { effc =
+          fun (type a) (eff : a Effect.t) ->
+            match eff with
+            | Unleash (p, rdata) ->
+              Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
+              Algaeff.Fun.Deep.finally k @@ fun () -> H.unleash p rdata
+            | _ -> None }
+end
+
+module Perform : Handler =
+struct
+  include R.Eff.Perform
+  let unleash = unleash
+end
