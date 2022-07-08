@@ -1,5 +1,6 @@
 module Syntax = Syntax
 module Errors = Errors
+module Eff = Eff
 
 module CS = Syntax
 module S = NbE.Syntax
@@ -7,14 +8,6 @@ module D = NbE.Domain
 module UL = NbE.ULvl
 module R = Refiner
 module T = R.Tactic
-
-exception Error of Errors.t
-
-type _ Effect.t += Unleash : CS.bound_name * R.ResolveData.t -> CS.name Effect.t
-let unleash p data = Effect.perform @@ Unleash (p, data)
-
-let not_inferable ~tm = raise @@ Error (NotInferable {tm})
-let ill_typed ~tm ~tp = raise @@ Error (IllTyped {tm; tp})
 
 let unleash_hole : T.check =
   T.Check.peek @@ fun goal ->
@@ -31,7 +24,7 @@ let unleash_hole : T.check =
       R.Eff.eval @@
       List.fold_right make_pi bnds @@ R.Eff.quote goal.tp
     in
-    unleash None @@ R.ResolveData.Axiom {tp}
+    Eff.unleash None @@ R.ResolveData.Axiom {tp}
   in
 
   T.Check.infer @@
@@ -56,7 +49,7 @@ let infer_var p s : T.infer =
     R.Structural.local_var cell
   | Some _, Some _ ->
     Format.eprintf "@[<2>Local@ variable@ %a@ could@ not@ have@ level@ shifting@]@." Syntax.dump_name p;
-    not_inferable ~tm:{node = CS.Var (p, s); loc = None}
+    Eff.not_inferable ~tm:{node = CS.Var (p, s); loc = None}
   | None, _ ->
     R.Structural.global_var p (check_shift s)
 
@@ -74,7 +67,7 @@ let rec infer tm : T.infer =
     R.Sigma.snd ~itm:(infer tm)
   | _ ->
     (* Format.eprintf "@[<2>Could@ not@ infer@ the@ type@ of@ %a@]@." Syntax.dump tm; *)
-    not_inferable ~tm
+    Eff.not_inferable ~tm
 
 (* The [fallback_infer] parameter is for the two-stage type checking: first round,
    we try to check things without unfolding the type, and then we unfold the type
@@ -101,14 +94,14 @@ and check ?(fallback_infer=true) tm : T.check =
       T.Check.peek @@ fun goal ->
       T.Check.orelse (T.Check.infer (infer tm)) @@ fun exn ->
       match exn, goal.tp with
-      | Error NotInferable _, D.Unfold _ ->
+      | Eff.Error NotInferable _, D.Unfold _ ->
         T.Check.forcing @@ check ~fallback_infer:false tm
       | _ ->
-        ill_typed ~tm ~tp:goal.tp
+        Eff.ill_typed ~tm ~tp:goal.tp
     end
   | _ ->
     T.Check.peek @@ fun goal ->
-    ill_typed ~tm ~tp:goal.tp
+    Eff.ill_typed ~tm ~tp:goal.tp
 
 
 (* the public interface *)
@@ -140,33 +133,3 @@ let check_top lhs tm ~tp =
   R.Eff.with_top_env @@ fun () ->
   let ulvl = T.Shift.run @@ R.ULvl.base in
   T.Check.run {tp = NbE.app_ulvl ~tp ~ulvl; lhs} @@ check tm
-
-module type Handler =
-sig
-  include Refiner.Eff.Handler
-  val unleash : CS.bound_name -> Refiner.ResolveData.t -> CS.name
-end
-
-module Run (H : Handler) =
-struct
-  let run_refiner f =
-    let module Run = R.Eff.Run (H) in
-    Run.run f
-
-  let run f =
-    Effect.Deep.try_with
-      run_refiner f
-      { effc =
-          fun (type a) (eff : a Effect.t) ->
-            match eff with
-            | Unleash (p, rdata) ->
-              Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
-              Algaeff.Fun.Deep.finally k @@ fun () -> H.unleash p rdata
-            | _ -> None }
-end
-
-module Perform : Handler =
-struct
-  include R.Eff.Perform
-  let unleash = unleash
-end

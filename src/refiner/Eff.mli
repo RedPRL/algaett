@@ -6,7 +6,14 @@ val trap : (unit -> 'a) -> ('a, Errors.t) Result.t
 
 val blessed_ulvl : unit -> NbE.Domain.t
 
-val resolve : Yuujinchou.Trie.path -> ResolveData.t
+module type Handler =
+sig
+  val resolve : Yuujinchou.Trie.path -> ResolveData.t
+end
+
+module Perform : Handler
+include module type of Perform
+
 val resolve_local : Yuujinchou.Trie.path -> (NbE.Domain.cell * unit) option (* TODO: what is the unit for? *)
 val resolve_level : int -> NbE.Domain.cell option
 
@@ -28,14 +35,7 @@ sig
   val quote_ctx : unit -> bnd list
 end
 
-module type Handler =
-sig
-  val resolve : Yuujinchou.Trie.path -> ResolveData.t
-end
-
 module Run (H : Handler) :
 sig
   val run : (unit -> 'a) -> 'a
 end
-
-module Perform : Handler

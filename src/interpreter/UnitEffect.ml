@@ -93,7 +93,7 @@ struct
         shadow = (fun _ _ _ y -> y);
         hook = (fun _ _ -> function _ -> .) }
 
-  module ElaboratorHandler : Elaborator.Handler =
+  module ElaboratorHandler : Elaborator.Eff.Handler =
   struct
     let counter = ref 0
 
@@ -115,7 +115,7 @@ struct
   end
 
   let run_elab f =
-    let module R = Elaborator.Run (ElaboratorHandler) in
+    let module R = Elaborator.Eff.Run (ElaboratorHandler) in
     R.run f
 
   let prerun f =

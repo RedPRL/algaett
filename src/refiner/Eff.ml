@@ -7,7 +7,30 @@ module UL = NbE.ULvl
 
 type _ Effect.t += Resolve : Yuujinchou.Trie.path -> ResolveData.t Effect.t
 
-let resolve p = Effect.perform @@ Resolve p
+module type Handler =
+sig
+  val resolve : Yuujinchou.Trie.path -> ResolveData.t
+end
+
+module Run (H : Handler) =
+struct
+  let run f =
+    Effect.Deep.try_with f ()
+      { effc =
+          fun (type a) (eff : a Effect.t) ->
+            match eff with
+            | Resolve p ->
+              Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
+              Algaeff.Fun.Deep.finally k (fun () -> H.resolve p)
+            | _ -> None }
+end
+
+module Perform =
+struct
+  let resolve p = Effect.perform @@ Resolve p
+end
+
+include Perform
 
 exception Error of Errors.t
 
@@ -108,27 +131,4 @@ struct
     let nil () = [] in
     let cons ~arg ~bnd bnds = bnd :: bnds in
     fold_right_ctx ~nil ~cons
-end
-
-module type Handler =
-sig
-  val resolve : Yuujinchou.Trie.path -> ResolveData.t
-end
-
-module Run (H : Handler) =
-struct
-  let run f =
-    Effect.Deep.try_with f ()
-      { effc =
-          fun (type a) (eff : a Effect.t) ->
-            match eff with
-            | Resolve p ->
-              Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
-              Algaeff.Fun.Deep.finally k (fun () -> H.resolve p)
-            | _ -> None }
-end
-
-module Perform : Handler =
-struct
-  let resolve = resolve
 end
