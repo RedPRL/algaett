@@ -8,7 +8,14 @@ val compare_id : id -> id -> int
 val new_ : info -> id
 val use : id -> unit
 
-type handler = { warn_unused : info -> unit }
+module type Handler =
+sig
+  val warn_unused : info -> unit
+end
 
-val run : (unit -> 'a) -> handler -> 'a
-val perform : handler
+module Run (H : Handler) :
+sig
+  val run : (unit -> 'a) -> 'a
+end
+
+module Perform : Handler

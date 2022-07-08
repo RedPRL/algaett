@@ -12,9 +12,16 @@ val import : ?loc:Elaborator.Syntax.span -> Bantorra.Manager.path -> Syntax.modi
 val section : Yuujinchou.Trie.path -> (unit -> 'a) -> 'a
 val get_export : unit -> Refiner.ResolveData.t Yuujinchou.Trie.Untagged.t
 
-type handler =
-  { load : Bantorra.Manager.path -> Refiner.ResolveData.t Yuujinchou.Trie.Untagged.t;
-    preload : Bantorra.Manager.path -> unit;
-    warn_unused : Used.info -> unit }
-val run : (unit -> 'a) -> handler -> 'a
-val perform : handler
+module type Handler =
+sig
+  val load : Bantorra.Manager.path -> Refiner.ResolveData.t Yuujinchou.Trie.Untagged.t
+  val preload : Bantorra.Manager.path -> unit
+  val warn_unused : Used.info -> unit
+end
+
+module Run (H : Handler) :
+sig
+  val run : (unit -> 'a) -> 'a
+end
+
+module Perform : Handler

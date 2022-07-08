@@ -21,6 +21,14 @@ val not_convertible : NbE.Domain.t -> NbE.Domain.t -> 'a
 
 val with_top_env : (unit -> 'a) -> 'a
 
-type handler = { resolve : Yuujinchou.Trie.path -> ResolveData.t }
-val run : (unit -> 'a) -> handler -> 'a
-val perform : handler
+module type Handler =
+sig
+  val resolve : Yuujinchou.Trie.path -> ResolveData.t
+end
+
+module Run (H : Handler) :
+sig
+  val run : (unit -> 'a) -> 'a
+end
+
+module Perform : Handler

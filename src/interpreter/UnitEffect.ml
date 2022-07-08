@@ -23,20 +23,31 @@ type _ Effect.t +=
   | Preload : Bantorra.Manager.path -> unit Effect.t
   | WarnUnused : Used.info -> unit Effect.t
 
-type handler =
-  { load : Bantorra.Manager.path -> Refiner.ResolveData.t Yuujinchou.Trie.Untagged.t;
-    preload : Bantorra.Manager.path -> unit;
-    warn_unused : Used.info -> unit }
+module type Handler =
+sig
+  val load : Bantorra.Manager.path -> Refiner.ResolveData.t Yuujinchou.Trie.Untagged.t
+  val preload : Bantorra.Manager.path -> unit
+  val warn_unused : Used.info -> unit
+end
 
-let load p = Effect.perform (Load p)
+let load p =
+  Effect.perform (Load p)
 
-let preload p = Effect.perform (Preload p)
+let preload p =
+  Effect.perform (Preload p)
 
-let warn_unused i = Effect.perform (WarnUnused i)
+let warn_unused i =
+  Effect.perform (WarnUnused i)
 
-let perform : handler = { load; preload; warn_unused }
+module Perform : Handler =
+struct
+  let load = load
+  let preload = preload
+  let warn_unused = warn_unused
+end
 
-module S = Yuujinchou.Scope.Make
+module S =
+  Yuujinchou.Scope.Make
     (struct
       type data = Refiner.ResolveData.t
       type tag = Used.id
@@ -57,7 +68,14 @@ let import ?loc u m =
   let u = S.modify m @@ Yuujinchou.Trie.retag id @@ load u in
   S.import_subtree ([], u)
 
-let run_used f = Used.run f { warn_unused }
+module UsedHandler =
+struct
+  let warn_unused = warn_unused
+end
+
+let run_used f =
+  let module R = Used.Run (UsedHandler) in
+  R.run f
 
 let run_scope f =
   S.run
@@ -69,27 +87,34 @@ let run_scope f =
       shadow = (fun _ _ _ y -> y);
       hook = (fun _ _ -> function _ -> .) }
 
-let run_checker f =
-  Elaborator.run f
-    { resolve =
-        fun p ->
-          match S.resolve p with
-          | None -> not_in_scope p
-          | Some (data, tag) -> Used.use tag; data }
+module ElaboratorHandler =
+struct
+  let resolve p =
+    match S.resolve p with
+    | None -> not_in_scope p
+    | Some (data, tag) -> Used.use tag; data
+end
 
-let run f h =
-  Effect.Deep.try_with
-    run_used (fun () -> run_scope @@ fun () -> run_checker f)
-    { effc =
-        fun (type a) (eff : a Effect.t) ->
-          match eff with
-          | Load p ->
-            Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
-            Algaeff.Fun.Deep.finally k @@ fun () -> h.load p
-          | Preload p ->
-            Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
-            Algaeff.Fun.Deep.finally k @@ fun () -> h.preload p
-          | WarnUnused i ->
-            Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
-            Algaeff.Fun.Deep.finally k @@ fun () -> h.warn_unused i
-          | _ -> None }
+let run_checker f =
+  let module R = Elaborator.Run (ElaboratorHandler) in
+  R.run f
+
+module Run (H : Handler) =
+struct
+  let run f =
+    Effect.Deep.try_with
+      run_used (fun () -> run_scope @@ fun () -> run_checker f)
+      { effc =
+          fun (type a) (eff : a Effect.t) ->
+            match eff with
+            | Load p ->
+              Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
+              Algaeff.Fun.Deep.finally k @@ fun () -> H.load p
+            | Preload p ->
+              Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
+              Algaeff.Fun.Deep.finally k @@ fun () -> H.preload p
+            | WarnUnused i ->
+              Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
+              Algaeff.Fun.Deep.finally k @@ fun () -> H.warn_unused i
+            | _ -> None }
+end

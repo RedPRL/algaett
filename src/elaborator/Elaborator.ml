@@ -111,6 +111,6 @@ let check_top lhs tm ~tp =
   let ulvl = R.Tactic.Shift.run @@ R.ULvl.base in
   R.Tactic.Check.run {tp = NbE.app_ulvl ~tp ~ulvl; lhs} @@ check tm
 
-type handler = R.Eff.handler = { resolve : CS.name -> R.ResolveData.t }
-let run = R.Eff.run
-let perform = R.Eff.perform
+module type Handler = R.Eff.Handler
+module Run = R.Eff.Run
+module Perform = R.Eff.Perform
