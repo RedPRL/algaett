@@ -50,6 +50,7 @@ and t_ =
   | Snd of t
   | Univ of shift list option
   | VirPi of t * bound_name * t
+  | Hole
 
 let dump_shifts fmt ss =
   Format.fprintf fmt "@[%a@]"
@@ -86,3 +87,5 @@ and dump_ fmt =
     Format.fprintf fmt "Univ @[%a@]" dump_shifts ss
   | VirPi (base, bound, fam) ->
     Format.fprintf fmt "@[<7>VirPi (@[%a@],@ @[%a@],@ @[%a@] )@]" dump base dump_bound_name bound dump fam
+  | Hole ->
+    Format.fprintf fmt "Hole"

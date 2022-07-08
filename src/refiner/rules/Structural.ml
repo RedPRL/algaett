@@ -1,5 +1,14 @@
 open RuleKit
 
+let level (lvl : int) : T.infer =
+  T.Infer.rule @@ fun _ ->
+  let cell = Eff.resolve_level lvl in
+  match cell with
+  | None ->
+    invalid_arg "level"
+  | Some {tm; tp} ->
+    Eff.quote tm, tp
+
 let local_var (cell : D.cell) : T.infer =
   T.Infer.rule @@ fun _ ->
   Eff.quote cell.tm, cell.tp

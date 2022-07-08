@@ -6,6 +6,7 @@ module S = NbE.Syntax
 module D = NbE.Domain
 module UL = NbE.ULvl
 module R = Refiner
+module T = R.Tactic
 
 exception Error of Errors.t
 
@@ -15,7 +16,31 @@ let unleash p data = Effect.perform @@ Unleash (p, data)
 let not_inferable ~tm = raise @@ Error (NotInferable {tm})
 let ill_typed ~tm ~tp = raise @@ Error (IllTyped {tm; tp})
 
-let check_shift (s : CS.shift list option) : Refiner.Tactic.shift =
+let unleash_hole : T.check =
+  T.Check.peek @@ fun goal ->
+  let bnds = R.Eff.Generalize.quote_ctx () in
+
+  let p =
+    let make_pi bnd bdy =
+      match bnd with
+      | R.Eff.Generalize.VirType tp -> S.VirPi (tp, bdy)
+      | R.Eff.Generalize.Type tp -> S.Pi (tp, bdy)
+    in
+    let tp =
+      R.Eff.with_top_env @@ fun () ->
+      R.Eff.eval @@
+      List.fold_right make_pi bnds @@ R.Eff.quote goal.tp
+    in
+    unleash None @@ R.ResolveData.Axiom {tp}
+  in
+
+  T.Check.infer @@
+  let head = R.Structural.global_var p @@ R.ULvl.base in
+  let app _ (l, itm) = l + 1, R.Pi.app ~itm ~ctm:(T.Check.infer @@ R.Structural.level l) in
+  snd @@ List.fold_right app bnds (1, head)
+
+
+let check_shift (s : CS.shift list option) : T.shift =
   match s with
   | None ->
     R.ULvl.base
@@ -25,7 +50,7 @@ let check_shift (s : CS.shift list option) : Refiner.Tactic.shift =
       ss
       R.ULvl.base
 
-let infer_var p s : R.Tactic.infer =
+let infer_var p s : T.infer =
   match R.Eff.resolve_local p, s with
   | Some (cell, ()), None ->
     R.Structural.local_var cell
@@ -35,7 +60,7 @@ let infer_var p s : R.Tactic.infer =
   | None, _ ->
     R.Structural.global_var p (check_shift s)
 
-let rec infer tm : R.Tactic.infer =
+let rec infer tm : T.infer =
   match tm.CS.node with
   | CS.Var (p, s) ->
     infer_var p s
@@ -55,7 +80,7 @@ let rec infer tm : R.Tactic.infer =
    we try to check things without unfolding the type, and then we unfold the type
    if type inference also fails. During the second round, we do not want to try
    the type inference again becouse it will have already failed once. *)
-and check ?(fallback_infer=true) tm : R.Tactic.check =
+and check ?(fallback_infer=true) tm : T.check =
   match tm.CS.node with
   | CS.Pi (base, name, fam) ->
     R.Pi.pi ~name ~cbase:(check base) ~cfam:(fun _ -> check fam)
@@ -69,18 +94,20 @@ and check ?(fallback_infer=true) tm : R.Tactic.check =
     R.Sigma.pair ~cfst:(check tm1) ~csnd:(check tm2)
   | CS.Univ s ->
     R.Univ.univ (check_shift s)
+  | CS.Hole ->
+    unleash_hole
   | _ when fallback_infer ->
     begin
-      R.Tactic.Check.peek @@ fun goal ->
-      R.Tactic.Check.orelse (R.Tactic.Check.infer (infer tm)) @@ fun exn ->
+      T.Check.peek @@ fun goal ->
+      T.Check.orelse (T.Check.infer (infer tm)) @@ fun exn ->
       match exn, goal.tp with
       | Error NotInferable _, D.Unfold _ ->
-        R.Tactic.Check.forcing @@ check ~fallback_infer:false tm
+        T.Check.forcing @@ check ~fallback_infer:false tm
       | _ ->
         ill_typed ~tm ~tp:goal.tp
     end
   | _ ->
-    R.Tactic.Check.peek @@ fun goal ->
+    T.Check.peek @@ fun goal ->
     ill_typed ~tm ~tp:goal.tp
 
 
@@ -94,7 +121,7 @@ let infer_top lhs tm =
   trap @@ fun () ->
   let tm, tp =
     R.Eff.with_top_env @@ fun () ->
-    let tm, tp = R.Tactic.Infer.run {lhs} @@ infer tm in
+    let tm, tp = T.Infer.run {lhs} @@ infer tm in
     tm, R.Eff.quote tp
   in
   S.lam tm, NbE.eval_top @@ S.vir_pi S.tp_ulvl tp
@@ -103,7 +130,7 @@ let check_tp_top lhs tp =
   trap @@ fun () ->
   let tp =
     R.Eff.with_top_env @@ fun () ->
-    R.Tactic.Check.run {tp = D.univ_top; lhs} @@ check tp
+    T.Check.run {tp = D.univ_top; lhs} @@ check tp
   in
   S.vir_pi S.tp_ulvl tp
 
@@ -111,8 +138,8 @@ let check_top lhs tm ~tp =
   trap @@ fun () ->
   S.lam @@
   R.Eff.with_top_env @@ fun () ->
-  let ulvl = R.Tactic.Shift.run @@ R.ULvl.base in
-  R.Tactic.Check.run {tp = NbE.app_ulvl ~tp ~ulvl; lhs} @@ check tm
+  let ulvl = T.Shift.run @@ R.ULvl.base in
+  T.Check.run {tp = NbE.app_ulvl ~tp ~ulvl; lhs} @@ check tm
 
 module type Handler =
 sig

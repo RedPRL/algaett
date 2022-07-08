@@ -7,7 +7,8 @@ val trap : (unit -> 'a) -> ('a, Errors.t) Result.t
 val blessed_ulvl : unit -> NbE.Domain.t
 
 val resolve : Yuujinchou.Trie.path -> ResolveData.t
-val resolve_local : Yuujinchou.Trie.path -> (NbE.Domain.cell * unit) option
+val resolve_local : Yuujinchou.Trie.path -> (NbE.Domain.cell * unit) option (* TODO: what is the unit for? *)
+val resolve_level : int -> NbE.Domain.cell option
 
 (** invariant: the return values must be effect-less *)
 val eval : NbE.Syntax.t -> NbE.Domain.t
@@ -20,6 +21,12 @@ val quote : NbE.Domain.t -> NbE.Syntax.t
 val not_convertible : NbE.Domain.t -> NbE.Domain.t -> 'a
 
 val with_top_env : (unit -> 'a) -> 'a
+
+module Generalize :
+sig
+  type bnd = VirType of NbE.Syntax.t | Type of NbE.Syntax.t
+  val quote_ctx : unit -> bnd list
+end
 
 module type Handler =
 sig
