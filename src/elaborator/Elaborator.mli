@@ -8,7 +8,7 @@ val check_top : NbE.LHS.t -> Syntax.t -> tp:NbE.Domain.t -> (NbE.Syntax.t, Error
 module type Handler =
 sig
   include Refiner.Eff.Handler
-  val unleash : Syntax.bound_name -> Refiner.ResolveData.t -> unit
+  val unleash : Syntax.bound_name -> Refiner.ResolveData.t -> Syntax.name
 end
 
 module Run (H : Handler) :

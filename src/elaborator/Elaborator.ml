@@ -9,7 +9,7 @@ module R = Refiner
 
 exception Error of Errors.t
 
-type _ Effect.t += Unleash : CS.bound_name * R.ResolveData.t -> unit Effect.t
+type _ Effect.t += Unleash : CS.bound_name * R.ResolveData.t -> CS.name Effect.t
 let unleash p data = Effect.perform @@ Unleash (p, data)
 
 let not_inferable ~tm = raise @@ Error (NotInferable {tm})
@@ -117,7 +117,7 @@ let check_top lhs tm ~tp =
 module type Handler =
 sig
   include Refiner.Eff.Handler
-  val unleash : CS.bound_name -> Refiner.ResolveData.t -> unit
+  val unleash : CS.bound_name -> Refiner.ResolveData.t -> CS.name
 end
 
 module Run (H : Handler) =

@@ -111,7 +111,7 @@ struct
           counter := i + 1;
           ["_"; Int.to_string i]
       in
-      include_singleton (p, data)
+      include_singleton (p, data); p
   end
 
   let run_elab f =
