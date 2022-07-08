@@ -1,7 +1,7 @@
 (library
  (name Refiner)
  (flags
-  (:standard -w -32-37-38-27-26-79 -warn-error -a+31))
+  (:standard -w -32-37-38-27-26-79-39 -warn-error -a+31))
  (libraries bwd algaeff mugen yuujinchou algaett.nbe)
  (public_name algaett.refiner))
 
