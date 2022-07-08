@@ -12,7 +12,7 @@ sig
   val resolve : Yuujinchou.Trie.path -> ResolveData.t
 end
 
-module Run (H : Handler) =
+module Handle (H : Handler) =
 struct
   let run f =
     Effect.Deep.try_with f ()

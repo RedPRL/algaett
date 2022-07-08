@@ -13,7 +13,7 @@ sig
   val warn_unused : info -> unit
 end
 
-module Run (H : Handler) :
+module Handle (H : Handler) :
 sig
   val run : (unit -> 'a) -> 'a
 end

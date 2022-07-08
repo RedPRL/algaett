@@ -13,5 +13,5 @@ type unused_info = Used.info =
   | Local of Yuujinchou.Trie.path Elaborator.Syntax.node
 
 module type Handler = UnitEffect.Handler
-module Run = UnitEffect.Run
+module Handle = UnitEffect.Handle
 module Perform = UnitEffect.Perform

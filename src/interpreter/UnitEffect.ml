@@ -72,7 +72,7 @@ let import ?loc u m =
   let u = S.modify m @@ Yuujinchou.Trie.retag id @@ load u in
   S.import_subtree ([], u)
 
-module Run (H : Handler) =
+module Handle (H : Handler) =
 struct
   module UsedHandler =
   struct
@@ -80,7 +80,7 @@ struct
   end
 
   let run_used f =
-    let module R = Used.Run (UsedHandler) in
+    let module R = Used.Handle (UsedHandler) in
     R.run f
 
   let run_scope f =
@@ -115,7 +115,7 @@ struct
   end
 
   let run_elab f =
-    let module R = Elaborator.Eff.Run (ElaboratorHandler) in
+    let module R = Elaborator.Eff.Handle (ElaboratorHandler) in
     R.run f
 
   let prerun f =

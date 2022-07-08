@@ -5,10 +5,10 @@ struct
   let warn_unused _ = ()
 end
 
-module RunInterpreter = Interpreter.Run (InterpreterHandler)
+module HandleInterpreter = Interpreter.Handle (InterpreterHandler)
 
 let run_interpreter =
-  RunInterpreter.run
+  HandleInterpreter.run
 
 let load =
   function

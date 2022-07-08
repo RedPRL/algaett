@@ -34,7 +34,7 @@ struct
     Effect.perform (WarnUnused info)
 end
 
-module Run (H : Handler) =
+module Handle (H : Handler) =
 struct
   let run f =
     U.run @@ fun () -> S.run ~init:IDSet.empty @@ fun () ->

@@ -12,11 +12,11 @@ sig
   val unleash : CS.bound_name -> Refiner.ResolveData.t -> CS.name
 end
 
-module Run (H : Handler) =
+module Handle (H : Handler) =
 struct
   let run_refiner f =
-    let module Run = R.Eff.Run (H) in
-    Run.run f
+    let module Handle = R.Eff.Handle (H) in
+    Handle.run f
 
   let run f =
     Effect.Deep.try_with

@@ -4,7 +4,7 @@ sig
   val unleash : Syntax.bound_name -> Refiner.ResolveData.t -> Syntax.name
 end
 
-module Run (H : Handler) :
+module Handle (H : Handler) :
 sig
   val run : (unit -> 'a) -> 'a
 end

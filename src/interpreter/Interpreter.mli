@@ -14,7 +14,7 @@ type unused_info =
 
 module type Handler = UnitEffect.Handler
 module Perform : Handler
-module Run (H : Handler) :
+module Handle (H : Handler) :
 sig
   val run : (unit -> 'a) -> 'a
 end
