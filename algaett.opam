@@ -16,13 +16,14 @@ depends: [
   "cmdliner" {>= "1.1"}
   "earley" {>= "3.0"}
   "emoji" {>= "1.2"}
-  "yuujinchou" {>= "3.0"}
   "odoc" {with-doc}
   "bantorra"
+  "yuujinchou"
   "mugen"
 ]
 pin-depends: [
   [ "bantorra.0.2.0~dev" "git+https://github.com/RedPRL/bantorra" ]
+  [ "yuujinchou.3.0.0~dev" "git+https://github.com/RedPRL/yuujinchou#use-modules" ]
   [ "emoji.1.2.0~pre" "git+https://github.com/fxfactorial/ocaml-emoji" ]
   [ "mugen.0.1.0~dev" "git+https://github.com/RedPRL/mugen" ]
 ]

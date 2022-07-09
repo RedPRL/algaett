@@ -96,23 +96,24 @@ struct
       include_singleton (p, data); p
   end
 
+  module ScopeH : S.Handler =
+  struct
+    let not_found _ _ = ()
+    let shadow _ _ _ y = y
+    let hook _ _ : Syntax.empty -> _ =
+      function _ -> .
+  end
+
   module UsedR = Used.Run (UsedH)
   module ElabR = E.Eff.Run (ElabH)
-
-  let run_scope f =
-    S.run
-      (fun () ->
-         let ans = f () in
-         Seq.iter Used.use @@ Yuujinchou.Trie.set_of_tags Used.compare_id @@ S.get_export ();
-         ans)
-      { not_found = (fun _ _ -> ());
-        shadow = (fun _ _ _ y -> y);
-        hook = (fun _ _ -> function _ -> .) }
+  module ScopeR = S.Run (ScopeH)
 
   let prerun f =
     UsedR.run @@ fun () ->
-    run_scope @@ fun () ->
-    ElabR.run f
+    ScopeR.run @@ fun () ->
+    let ans = ElabR.run f in
+    Seq.iter Used.use @@ Yuujinchou.Trie.set_of_tags Used.compare_id @@ S.get_export ();
+    ans
 
   let handler (type a) : a Effect.t -> _ =
     function
