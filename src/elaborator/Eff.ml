@@ -14,20 +14,16 @@ end
 
 module Run (H : Handler) =
 struct
-  let run_refiner f =
-    let module Run = R.Eff.Run (H) in
-    Run.run f
+  module RunR = R.Eff.Run (H)
 
-  let run f =
-    Effect.Deep.try_with
-      run_refiner f
-      { effc =
-          fun (type a) (eff : a Effect.t) ->
-            match eff with
-            | Unleash (p, rdata) ->
-              Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
-              Algaeff.Fun.Deep.finally k @@ fun () -> H.unleash p rdata
-            | _ -> None }
+  let handler (type a) : a Effect.t -> _ =
+    function
+    | Unleash (p, rdata) ->
+      Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
+      Algaeff.Fun.Deep.finally k @@ fun () -> H.unleash p rdata
+    | _ -> None
+
+  let run f = Effect.Deep.try_with RunR.run f {effc = handler}
 end
 
 module Perform =
