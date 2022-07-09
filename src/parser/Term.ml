@@ -4,7 +4,7 @@ open Locate
 open Token
 
 module E = Earley_core.Earley
-module S = Checker.Syntax
+module S = Elaborator.Syntax
 
 let virtual_tp = located term_vir_tp
 

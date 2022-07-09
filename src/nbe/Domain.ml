@@ -5,6 +5,7 @@ module S = Syntax
 type env = Data.value Lazy.t bwd (* invariant: lazy values must be effect-less *)
 
 type closure = Data.closure = Clo of {body : S.t; env : env}
+
 type con = Data.value =
   | Cut of Data.cut
   | Unfold of Data.unfold
@@ -17,19 +18,25 @@ type con = Data.value =
   | TpULvl
   | ULvl of (Data.ULvlShift.t, con) Mugen.Syntax.endo
   | VirUniv
+
 type cut = Data.cut
+
 type unfold = Data.unfold
+
 type cut_head = Data.cut_head =
   | Lvl of int
   | Axiom of Yuujinchou.Trie.path (* not used for now *)
+
 type unfold_head = Data.unfold_head =
   | Def of Yuujinchou.Trie.path * con Lazy.t
+
 type frame = Data.frame =
   | App of con
   | Fst
   | Snd
 
 type t = con
+type cell = {tm : t; tp : t}
 
 let lvl l = Cut (Lvl l, Emp)
 let def p v = Unfold (Def (p, v), Emp, v)
@@ -44,4 +51,5 @@ module ULvl =
     end)
 
 let univ_top = Univ ULvl.top
+
 let vir_univ = VirUniv

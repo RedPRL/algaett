@@ -1,4 +1,0 @@
-(library
- (name Checker)
- (libraries bwd algaeff mugen yuujinchou algaett.nbe)
- (public_name algaett.checker))

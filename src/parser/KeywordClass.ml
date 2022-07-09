@@ -1,8 +1,8 @@
 type t =
   | Underscore
-  | TermField of (Checker.Syntax.t -> Checker.Syntax.t_)
-  | TermConstant of (shift:Checker.Syntax.shift list option -> Checker.Syntax.t_)
-  | TermVirtualType of Checker.Syntax.t_
+  | TermField of (Elaborator.Syntax.t -> Elaborator.Syntax.t_)
+  | TermConstant of (shift:Elaborator.Syntax.shift list option -> Elaborator.Syntax.t_)
+  | TermVirtualType of Elaborator.Syntax.t_
   | CmdDef
   | CmdAxiom
   | CmdQuit

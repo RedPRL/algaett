@@ -66,7 +66,7 @@ let raw_seg = Earley.(no_blank_layout @@ greedy @@ raw_seg_)
 
 let keywords =
   let open KeywordClass in
-  let module S = Checker.Syntax in
+  let module S = Elaborator.Syntax in
   Hashtbl.of_seq @@ List.to_seq [
     Emoji.(keycap_number_sign ^ keycap_1), TermField (fun tm -> S.Fst tm);
     Emoji.(keycap_number_sign ^ keycap_2), TermField (fun tm -> S.Snd tm);

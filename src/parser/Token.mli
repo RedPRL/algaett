@@ -4,9 +4,9 @@ type check_tag = {check_tag : string list -> bool}
 (* names and keywords *)
 val name : string list Earley_core.Earley.grammar
 val underscore : unit Earley_core.Earley.grammar
-val term_field : (Checker.Syntax.t -> Checker.Syntax.t_) Earley_core.Earley.grammar
-val term_constant : (shift:Checker.Syntax.shift list option -> Checker.Syntax.t_) Earley_core.Earley.grammar
-val term_vir_tp : Checker.Syntax.t_ Earley_core.Earley.grammar
+val term_field : (Elaborator.Syntax.t -> Elaborator.Syntax.t_) Earley_core.Earley.grammar
+val term_constant : (shift:Elaborator.Syntax.shift list option -> Elaborator.Syntax.t_) Earley_core.Earley.grammar
+val term_vir_tp : Elaborator.Syntax.t_ Earley_core.Earley.grammar
 val def : unit Earley_core.Earley.grammar
 val axiom : unit Earley_core.Earley.grammar
 val quit : unit Earley_core.Earley.grammar

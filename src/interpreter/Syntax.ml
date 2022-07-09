@@ -1,4 +1,4 @@
-include Checker.Syntax
+include Elaborator.Syntax
 
 type empty = |
 type modifier = empty Yuujinchou.Language.t

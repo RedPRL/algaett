@@ -1,4 +1,4 @@
 (library
  (name Interpreter)
- (libraries bwd algaeff bantorra yuujinchou algaett.nbe algaett.checker)
+ (libraries bwd algaeff bantorra yuujinchou algaett.nbe algaett.elaborator)
  (public_name algaett.interpreter))

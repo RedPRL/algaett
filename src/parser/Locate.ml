@@ -10,14 +10,14 @@ let lexing_position i c =
   }
 
 let locate i1 c1 i2 c2 =
-  Checker.Syntax.{
+  Elaborator.Syntax.{
     start = lexing_position i1 c1;
     stop = lexing_position i2 c2;
   }
 
 let located p =
   p |> Earley.apply_position @@ fun i1 c1 i2 c2 x ->
-  Checker.Syntax.{
+  Elaborator.Syntax.{
     node = x;
     loc = Some (locate i1 c1 i2 c2);
   }
