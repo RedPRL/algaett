@@ -70,24 +70,10 @@ let import ?loc u m =
 
 module Run (H : Handler) =
 struct
-  module UsedHandler =
+  module UsedH : Used.Handler =
   struct
     let warn_unused = warn_unused
   end
-
-  let run_used f =
-    let module R = Used.Run (UsedHandler) in
-    R.run f
-
-  let run_scope f =
-    S.run
-      (fun () ->
-         let ans = f () in
-         Seq.iter Used.use @@ Yuujinchou.Trie.set_of_tags Used.compare_id @@ S.get_export ();
-         ans)
-      { not_found = (fun _ _ -> ());
-        shadow = (fun _ _ _ y -> y);
-        hook = (fun _ _ -> function _ -> .) }
 
   module ElabH : E.Eff.Handler =
   struct
@@ -110,29 +96,38 @@ struct
       include_singleton (p, data); p
   end
 
-  let run_elab f =
-    let module R = E.Eff.Run (ElabH) in
-    R.run f
+  module UsedR = Used.Run (UsedH)
+  module ElabR = E.Eff.Run (ElabH)
+
+  let run_scope f =
+    S.run
+      (fun () ->
+         let ans = f () in
+         Seq.iter Used.use @@ Yuujinchou.Trie.set_of_tags Used.compare_id @@ S.get_export ();
+         ans)
+      { not_found = (fun _ _ -> ());
+        shadow = (fun _ _ _ y -> y);
+        hook = (fun _ _ -> function _ -> .) }
 
   let prerun f =
-    run_used @@ fun () ->
+    UsedR.run @@ fun () ->
     run_scope @@ fun () ->
-    run_elab f
+    ElabR.run f
+
+  let handler (type a) : a Effect.t -> _ =
+    function
+    | Load p ->
+      Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
+      Algaeff.Fun.Deep.finally k @@ fun () -> H.load p
+    | Preload p ->
+      Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
+      Algaeff.Fun.Deep.finally k @@ fun () -> H.preload p
+    | WarnUnused i ->
+      Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
+      Algaeff.Fun.Deep.finally k @@ fun () -> H.warn_unused i
+    | _ -> None
 
   let run f =
-    Effect.Deep.try_with
-      prerun f
-      { effc =
-          fun (type a) (eff : a Effect.t) ->
-            match eff with
-            | Load p ->
-              Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
-              Algaeff.Fun.Deep.finally k @@ fun () -> H.load p
-            | Preload p ->
-              Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
-              Algaeff.Fun.Deep.finally k @@ fun () -> H.preload p
-            | WarnUnused i ->
-              Option.some @@ fun (k : (a, _) Effect.Deep.continuation) ->
-              Algaeff.Fun.Deep.finally k @@ fun () -> H.warn_unused i
-            | _ -> None }
+    Effect.Deep.try_with prerun f
+      {effc = handler}
 end
