@@ -30,21 +30,14 @@ sig
   val warn_unused : Used.info -> unit
 end
 
-let load p =
-  Effect.perform (Load p)
-
-let preload p =
-  Effect.perform (Preload p)
-
-let warn_unused i =
-  Effect.perform (WarnUnused i)
-
 module Perform : Handler =
 struct
-  let load = load
-  let preload = preload
-  let warn_unused = warn_unused
+  let load p = Effect.perform @@ Load p
+  let preload p = Effect.perform @@ Preload p
+  let warn_unused i = Effect.perform @@ WarnUnused i
 end
+
+open Perform
 
 module S =
   Yuujinchou.Scope.Make
