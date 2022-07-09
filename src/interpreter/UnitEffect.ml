@@ -1,3 +1,6 @@
+module E = Elaborator
+module D = NbE.Domain
+
 type error =
   | NotInScope of Yuujinchou.Trie.path
   | NotInferable of {tm : Syntax.t}
@@ -11,9 +14,9 @@ let trap f = try Result.ok (f ()) with Error e -> Result.error e
 let reraise_elaborator =
   function
   | Ok v -> v
-  | Error (Elaborator.Errors.NotInferable {tm}) -> raise (Error (NotInferable {tm}))
-  | Error (Elaborator.Errors.IllTyped {tm; tp}) -> raise (Error (IllTyped {tm; tp}))
-  | Error (Elaborator.Errors.Conversion (u, v)) -> raise (Error (Conversion (u, v)))
+  | Error (E.Errors.NotInferable {tm}) -> raise (Error (NotInferable {tm}))
+  | Error (E.Errors.IllTyped {tm; tp}) -> raise (Error (IllTyped {tm; tp}))
+  | Error (E.Errors.Conversion (u, v)) -> raise (Error (Conversion (u, v)))
 
 
 let not_in_scope n = raise (Error (NotInScope n))
@@ -65,7 +68,7 @@ let import ?loc u m =
   let u = S.modify m @@ Yuujinchou.Trie.retag id @@ load u in
   S.import_subtree ([], u)
 
-module Handle (H : Handler) =
+module Run (H : Handler) =
 struct
   module UsedHandler =
   struct
@@ -73,7 +76,7 @@ struct
   end
 
   let run_used f =
-    let module R = Used.Handle (UsedHandler) in
+    let module R = Used.Run (UsedHandler) in
     R.run f
 
   let run_scope f =
@@ -86,7 +89,7 @@ struct
         shadow = (fun _ _ _ y -> y);
         hook = (fun _ _ -> function _ -> .) }
 
-  module ElaboratorHandler : Elaborator.Eff.Handler =
+  module ElabH : E.Eff.Handler =
   struct
     let counter = ref 0
 
@@ -108,7 +111,7 @@ struct
   end
 
   let run_elab f =
-    let module R = Elaborator.Eff.Handle (ElaboratorHandler) in
+    let module R = E.Eff.Run (ElabH) in
     R.run f
 
   let prerun f =

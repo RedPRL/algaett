@@ -35,7 +35,7 @@ sig
   val quote_ctx : unit -> bnd list
 end
 
-module Handle (H : Handler) :
+module Run (H : Handler) :
 sig
   val run : (unit -> 'a) -> 'a
 end

@@ -5,7 +5,7 @@ struct
   let warn_unused _ = ()
 end
 
-module HandleInterpreter = Interpreter.Handle (InterpreterHandler)
+module HandleInterpreter = Interpreter.Run (InterpreterHandler)
 
 let run_interpreter =
   HandleInterpreter.run
