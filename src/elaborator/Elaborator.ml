@@ -74,24 +74,24 @@ let rec infer tm : T.infer =
    if type inference also fails. During the second round, we do not want to try
    the type inference again becouse it will have already failed once. *)
 and check ?(fallback_infer=true) tm : T.check =
-  match tm.CS.node with
-  | CS.Pi (base, name, fam) ->
+  T.Check.peek @@ fun goal ->
+  match tm.CS.node, goal.tp with
+  | CS.Pi (base, name, fam), D.Univ _ ->
     R.Pi.pi ~name ~cbase:(check base) ~cfam:(fun _ -> check fam)
-  | CS.VirPi (base, name, fam) ->
+  | CS.VirPi (base, name, fam), D.Univ _ ->
     R.Pi.vir_pi ~name ~cbase:(check base) ~cfam:(fun _ -> check fam)
-  | CS.Sigma (base, name, fam) ->
+  | CS.Sigma (base, name, fam), D.Univ _ ->
     R.Sigma.sigma ~name ~cbase:(check base) ~cfam:(fun _ -> check fam)
-  | CS.Lam (name, body) ->
+  | CS.Lam (name, body), (D.Pi _ | D.VirPi _) ->
     R.Pi.lam ~name ~cbnd:(fun _ -> check body)
-  | CS.Pair (tm1, tm2) ->
+  | CS.Pair (tm1, tm2), D.Sigma _ ->
     R.Sigma.pair ~cfst:(check tm1) ~csnd:(check tm2)
-  | CS.Univ s ->
+  | CS.Univ s , D.Univ _ ->
     R.Univ.univ (check_shift s)
-  | CS.Hole ->
+  | CS.Hole, _ ->
     unleash_hole
   | _ when fallback_infer ->
     begin
-      T.Check.peek @@ fun goal ->
       T.Check.orelse (T.Check.infer (infer tm)) @@ fun exn ->
       match exn, goal.tp with
       | Eff.Error NotInferable _, D.Unfold _ ->
