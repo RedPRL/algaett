@@ -25,13 +25,11 @@ struct
 
   type t = goal -> result
 
-  let rule t = t
+  let rule t goal = t {goal with tp = NbE.force_all goal.tp}
   let run goal t = t goal
-  let peek t goal = t goal goal
-
-  let forcing (t : t) : t =
-    fun goal ->
-    t {goal with tp = NbE.force_all goal.tp}
+  let peek t =
+    rule @@ fun goal -> 
+    t goal goal
 
   let infer (inf : infer) : t =
     fun goal ->
@@ -40,7 +38,7 @@ struct
     | NbE.Unequal -> Eff.not_convertible goal.tp tp'
 
   let orelse t k : t =
-    fun goal ->
+    rule @@ fun goal ->
     try t goal with
     | exn ->
       k exn goal

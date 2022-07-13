@@ -73,7 +73,7 @@ let rec infer tm : T.infer =
    we try to check things without unfolding the type, and then we unfold the type
    if type inference also fails. During the second round, we do not want to try
    the type inference again becouse it will have already failed once. *)
-and check ?(fallback_infer=true) tm : T.check =
+and check tm : T.check =
   match tm.CS.node with
   | CS.Pi (base, name, fam) ->
     R.Pi.pi ~name ~cbase:(check base) ~cfam:(fun _ -> check fam)
@@ -89,19 +89,7 @@ and check ?(fallback_infer=true) tm : T.check =
     R.Univ.univ (check_shift s)
   | CS.Hole ->
     unleash_hole
-  | _ when fallback_infer ->
-    begin
-      T.Check.peek @@ fun goal ->
-      T.Check.orelse (T.Check.infer (infer tm)) @@ fun exn ->
-      match exn, goal.tp with
-      | Eff.Error NotInferable _, D.Unfold _ ->
-        T.Check.forcing @@ check ~fallback_infer:false tm
-      | _ ->
-        Eff.ill_typed ~tm ~tp:goal.tp
-    end
-  | _ ->
-    T.Check.peek @@ fun goal ->
-    Eff.ill_typed ~tm ~tp:goal.tp
+  | _ -> T.Check.infer (infer tm)
 
 
 (* the public interface *)

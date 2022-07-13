@@ -19,7 +19,6 @@ sig
   val peek : (goal -> t) -> t
   val orelse : t -> (exn -> t) -> t
   val infer : infer -> t
-  val forcing : t -> t
 end
 
 module type ShiftPublic =
