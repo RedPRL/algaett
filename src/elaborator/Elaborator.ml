@@ -82,18 +82,19 @@ and check tm : T.check =
   | CS.Pair (tm1, tm2) ->
     R.Sigma.pair ~cfst:(check tm1) ~csnd:(check tm2)
   | CS.Univ s ->
-    R.Univ.univ (check_shift s)
+    R.Univ.univ @@ check_shift s
   | CS.Hole ->
     unleash_hole
-  | _ -> T.Check.infer (infer tm)
+  | _ ->
+    T.Check.infer @@ infer tm
 
 
 (* the public interface *)
 
 let trap (f : unit -> 'a) : ('a, Errors.t) Result.t =
   try Result.ok (f ()) with
-    | R.Eff.Error (R.Errors.Conversion (u,v)) -> Result.error (Errors.Conversion (u,v))
-    | Eff.Error e -> Result.error e
+  | R.Eff.Error (R.Errors.Conversion (u,v)) -> Result.error @@ Errors.Conversion (u,v)
+  | Eff.Error e -> Result.error e
 
 
 let infer_top lhs tm =
