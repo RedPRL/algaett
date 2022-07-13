@@ -69,10 +69,6 @@ let rec infer tm : T.infer =
     (* Format.eprintf "@[<2>Could@ not@ infer@ the@ type@ of@ %a@]@." Syntax.dump tm; *)
     Eff.not_inferable ~tm
 
-(* The [fallback_infer] parameter is for the two-stage type checking: first round,
-   we try to check things without unfolding the type, and then we unfold the type
-   if type inference also fails. During the second round, we do not want to try
-   the type inference again becouse it will have already failed once. *)
 and check tm : T.check =
   match tm.CS.node with
   | CS.Pi (base, name, fam) ->
