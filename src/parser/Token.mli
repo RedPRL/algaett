@@ -25,6 +25,7 @@ val maps_to : unit Earley_core.Earley.grammar
 val multiply : unit Earley_core.Earley.grammar
 val plus : unit Earley_core.Earley.grammar
 val right_arrow : unit Earley_core.Earley.grammar
+val question : unit Earley_core.Earley.grammar
 val semi : unit Earley_core.Earley.grammar
 val semisemi : unit Earley_core.Earley.grammar
 val times : unit Earley_core.Earley.grammar

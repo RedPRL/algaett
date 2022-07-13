@@ -25,6 +25,7 @@ let section_end = keyword |> Earley.apply @@ function CmdSectionEnd {check_tag} 
 let at = Earley.greedy @@ parser {STR(Emoji.bullseye) | "@"} -> ()
 let colon = Earley.greedy @@ parser ":" -> ()
 let comma = Earley.greedy @@ parser "," -> ()
+let question = Earley.greedy @@ parser "?" -> ()
 let dollar = Earley.greedy @@ parser {STR(Emoji.back_arrow) | STR(Emoji.dollar_banknote) | "$"} -> ()
 let equal = Earley.greedy @@ parser { STR(Emoji.heavy_equals_sign) | "=" } -> ()
 let maps_to = Earley.greedy @@ parser {STR(Emoji.left_arrow_curving_right) | "=>"} -> ()
