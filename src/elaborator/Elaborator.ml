@@ -107,8 +107,10 @@ and check ?(fallback_infer=true) tm : T.check =
 (* the public interface *)
 
 let trap (f : unit -> 'a) : ('a, Errors.t) Result.t =
-  R.Eff.trap f |> Result.map_error @@ function
-  | R.Errors.Conversion (u, v) -> Errors.Conversion (u, v)
+  try Result.ok (f ()) with
+    | R.Eff.Error (R.Errors.Conversion (u,v)) -> Result.error (Errors.Conversion (u,v))
+    | Eff.Error e -> Result.error e
+
 
 let infer_top lhs tm =
   trap @@ fun () ->
