@@ -4,7 +4,7 @@ let pi ~name ~cbase ~cfam : T.check =
   Quantifier.quantifier ~name ~cbase ~cfam S.pi
 
 let vir_pi ~name ~cbase ~cfam : T.check =
-  Quantifier.vir_quantifier ~name ~cbase ~cfam S.pi
+  Quantifier.vir_quantifier ~name ~cbase ~cfam S.vir_pi
 
 let lam ~name ~cbnd : T.check =
   T.Check.rule @@ fun goal ->
