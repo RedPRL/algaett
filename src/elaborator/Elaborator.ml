@@ -82,10 +82,10 @@ and check tm : T.check =
   | CS.Pair (tm1, tm2) ->
     R.Sigma.pair ~cfst:(check tm1) ~csnd:(check tm2)
   | CS.Univ s ->
-    R.Univ.univ (check_shift s)
+    R.Univ.univ @@ check_shift s
   | CS.Hole ->
     unleash_hole tm.loc
-  | _ -> T.Check.infer (infer tm)
+  | _ -> T.Check.infer @@ infer tm
 
 
 (* the public interface *)
