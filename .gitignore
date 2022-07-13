@@ -121,3 +121,6 @@ setup.log
 
 # Merlin configuring file for Vim and Emacs
 .merlin
+
+# Local OPAM switch
+_opam/
