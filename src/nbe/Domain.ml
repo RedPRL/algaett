@@ -53,3 +53,17 @@ module ULvl =
 let univ_top = Univ ULvl.top
 
 let vir_univ = VirUniv
+
+let debug_show_head : con -> string = 
+  function
+  | Cut _ -> "<cut>"
+  | Unfold _ -> "<unfold>"
+  | Pi _ -> "<pi>"
+  | Lam _ -> "<lam>"
+  | Sigma _ -> "<sigma>"
+  | Pair _ -> "<pair>"
+  | Univ _ -> "<univ>"
+  | VirPi _ -> "<vir-pi>"
+  | TpULvl -> "<tp-ulvl>"
+  | ULvl _ -> "<ulvl>"
+  | VirUniv -> "<vir-univ>"
