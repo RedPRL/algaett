@@ -22,11 +22,10 @@ let unleash_hole loc : T.check =
     let tp =
       R.Eff.with_top_env @@ fun () ->
       R.Eff.eval @@
-      List.fold_right make_pi bnds @@ R.Eff.quote goal.tp
+      S.vir_pi S.tp_ulvl @@ List.fold_right make_pi bnds @@ R.Eff.quote goal.tp
     in
     Eff.unleash ?loc None @@ R.ResolveData.Axiom {tp}
   in
-
   T.Check.infer @@
   let head = R.Structural.global_var p @@ R.ULvl.base in
   let app _ (l, itm) = l + 1, R.Pi.app ~itm ~ctm:(T.Check.infer @@ R.Structural.level l) in
