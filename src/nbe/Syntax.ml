@@ -57,7 +57,7 @@ let rec dump fmt =
   | VirPi (base, fam) ->
     Format.fprintf fmt "@[<7>VirPi (@[%a@],@ @[%a@])@]" dump base dump fam
   | Pi (base, fam) ->
-    Format.fprintf fmt "@[<7>Pi (@[%a@],@ @[%a@])@]" dump base dump fam
+    Format.fprintf fmt "@[<7>VirPi (@[%a@],@ @[%a@])@]" dump base dump fam
   | Sigma (base, fam) ->
     Format.fprintf fmt "@[<7>Sigma (@[%a@],@ @[%a@])@]" dump base dump fam
   | TpULvl ->
