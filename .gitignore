@@ -1,7 +1,4 @@
-node_modules
-
 # -*- mode: gitignore; -*-
-*.install
 *~
 \#*\#
 /.emacs.desktop
@@ -29,7 +26,7 @@ tramp
 *.rel
 
 # AUCTeX auto folder
-auto/
+/auto/
 
 # cask packages
 .cask/
@@ -47,8 +44,8 @@ flycheck_*.el
 # directory configuration
 .dir-locals.el
 
-
-### https://raw.github.com/github/gitignore/fad779220742a6d54ccfc0c1a0e5b3d820253de6/Global/Linux.gitignore
+# network security
+/network-security.data
 
 *~
 
@@ -63,18 +60,13 @@ flycheck_*.el
 
 # .nfs files are created when an open file is removed but is still being accessed
 .nfs*
-
-
-### https://raw.github.com/github/gitignore/fad779220742a6d54ccfc0c1a0e5b3d820253de6/Global/macOS.gitignore
-
 # General
 .DS_Store
 .AppleDouble
 .LSOverride
 
 # Icon must end with two \r
-Icon
-
+Icon
 
 # Thumbnails
 ._*
@@ -94,10 +86,6 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
-
-
-### https://raw.github.com/github/gitignore/fad779220742a6d54ccfc0c1a0e5b3d820253de6/OCaml.gitignore
-
 *.annot
 *.cmo
 *.cma
@@ -121,3 +109,9 @@ setup.log
 
 # Merlin configuring file for Vim and Emacs
 .merlin
+
+# Dune generated files
+*.install
+
+# Local OPAM switch
+_opam/
