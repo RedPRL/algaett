@@ -25,7 +25,6 @@ let unleash_hole loc : T.check =
     Eff.unleash ?loc None @@ R.ResolveData.Axiom {tp = vtp}
   in
   Format.printf "Unleashed hole %a : %a @." CS.dump_name p S.dump top_tp;
-  let vtp = R.Eff.with_top_env @@ fun () -> R.Eff.eval top_tp in
   T.Check.infer @@
   let head = R.Structural.global_var p @@ R.ULvl.base in
   let app _ (l, itm) = l + 1, R.Pi.app ~itm ~ctm:(T.Check.infer @@ R.Structural.level l) in
