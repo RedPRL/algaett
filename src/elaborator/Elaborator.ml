@@ -49,7 +49,7 @@ let infer_var p s : T.infer =
   | Some (cell, ()), None ->
     R.Structural.local_var cell
   | Some _, Some _ ->
-    let message = Format.asprintf "Local variable %a could not have level shifting" Syntax.dump_name p in
+    let message = Format.asprintf "Cannot level shift local variable `%a`" Syntax.dump_name p in
     let cause = "You're trying to shift this local variable" in
     Doctor.build ~code:NotInferable ~cause ~message |> Doctor.fatal
   | None, _ ->
