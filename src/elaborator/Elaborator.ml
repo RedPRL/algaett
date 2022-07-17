@@ -12,19 +12,22 @@ module T = R.Tactic
 let unleash_hole loc : T.check =
   T.Check.peek @@ fun goal ->
   let bnds = R.Eff.Generalize.quote_ctx () in
+  let goal = R.Eff.quote goal.tp in
   let top_tp =
     let make_pi bnd bdy =
       match bnd with
       | R.Eff.Generalize.VirType tp -> S.VirPi (tp, bdy)
       | R.Eff.Generalize.Type tp -> S.Pi (tp, bdy)
     in
-    S.vir_pi S.tp_ulvl @@ List.fold_right make_pi bnds @@ R.Eff.quote goal.tp
+    S.vir_pi S.tp_ulvl @@ List.fold_right make_pi bnds @@ goal
   in
   let p =
     let vtp = R.Eff.with_top_env @@ fun () -> R.Eff.eval top_tp in
     Eff.unleash ?loc None @@ R.ResolveData.Axiom {tp = vtp}
   in
-  Format.printf "Unleashed hole %a : %a @." CS.dump_name p S.dump top_tp;
+  Format.printf "Unleashed hole %a@." CS.dump_name p;
+  List.iter R.Eff.Generalize.(function VirType tp | Type tp -> Format.printf "%a@." S.dump tp) bnds;
+  Format.printf "⊢ %a @." S.dump goal;
   T.Check.infer @@
   let head = R.Structural.global_var p @@ R.ULvl.base in
   let app _ (l, itm) = l + 1, R.Pi.app ~itm ~ctm:(T.Check.infer @@ R.Structural.level l) in
