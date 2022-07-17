@@ -3,7 +3,6 @@ module D = NbE.Domain
 module UL = NbE.ULvl
 module LHS = NbE.LHS
 
-module Errors = Errors
 module ResolveData = ResolveData
 module Eff = Eff
 module Tactic = Tactic

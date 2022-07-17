@@ -69,7 +69,7 @@ let rec infer tm : T.infer =
   | CS.Snd tm ->
     R.Sigma.snd ~itm:(infer tm)
   | _ ->
-    let message = Format.asprintf "@[<2>Could@ not@ infer@ the@ type@ of@ %a@]@." Syntax.dump tm in
+    let message = Format.asprintf "Could not infer the type of %a" Syntax.dump tm in
     let cause = "Could not infer the type of this term" in
     Doctor.build ~code:NotInferable ~cause ~message |> Doctor.fatal
 

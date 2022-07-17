@@ -32,12 +32,6 @@ end
 
 include Perform
 
-exception Error of Errors.t
-
-let not_convertible u v = raise @@ Error (Conversion (u, v))
-
-let trap f = try Result.ok (f ()) with Error e -> Result.error e
-
 type env = {
   blessed_ulvl : D.t;
   local_names : (D.cell, unit) Yuujinchou.Trie.t;
