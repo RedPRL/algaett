@@ -30,9 +30,6 @@ module P = struct
 end
 module S = Yuujinchou.Scope.Make(P)
 
-let not_in_scope n =
-  Error.fatalf NotInScope "Variable `%a` is not in scope" Syntax.dump_name n
-
 let include_singleton ?loc (p, data) =
   let id = Used.new_ (Used.Local {value = p; loc}) in
   S.include_singleton (p, (data, id))
@@ -62,8 +59,8 @@ struct
 
     let resolve p =
       match S.resolve p with
-      | None -> not_in_scope p
-      | Some (data, tag) -> Used.use tag; data
+      | None -> None
+      | Some (data, tag) -> Used.use tag; Some data
 
     let unleash ?loc (name : Syntax.bound_name) data =
       let p =

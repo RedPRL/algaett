@@ -53,7 +53,7 @@ let infer_var p s : T.infer =
     R.Structural.global_var p (check_shift s)
 
 let rec infer tm : T.infer =
-  Error.tracef ?loc:tm.loc "When inferring %a" Syntax.dump tm @@ fun () ->
+  Error.tracef ?loc:tm.loc "When inferring the type of %a" Syntax.dump tm @@ fun () ->
   match tm.value with
   | CS.Var (p, s) ->
     infer_var p s

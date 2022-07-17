@@ -4,7 +4,7 @@ val blessed_ulvl : unit -> NbE.Domain.t
 
 module type Handler =
 sig
-  val resolve : Yuujinchou.Trie.path -> ResolveData.t
+  val resolve : Yuujinchou.Trie.path -> ResolveData.t option
 end
 
 module Perform : Handler
