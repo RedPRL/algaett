@@ -31,12 +31,6 @@ module S =
       type context = Syntax.empty
     end)
 
-let not_in_scope n =
-  let message = Format.asprintf "Variable `%a` is not in scope" Syntax.dump_name n in
-  let cause = "This variable is not in scope" in
-  Error.Doctor.build ~code:NotInScope ~cause ~message |> Error.Doctor.fatal
-
-
 let include_singleton span (p, data) =
   let id = Used.new_ (Used.Local {value = p; span}) in
   S.include_singleton (p, (data, id))
@@ -66,8 +60,8 @@ struct
 
     let resolve p =
       match S.resolve p with
-      | None -> not_in_scope p
-      | Some (data, tag) -> Used.use tag; data
+      | None -> None
+      | Some (data, tag) -> Used.use tag; Some data
 
     let unleash span (name : Syntax.bound_name) data =
       let p =

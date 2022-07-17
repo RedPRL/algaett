@@ -14,6 +14,10 @@ struct
   type t = goal -> result
   let rule t = t
   let run goal t = t goal
+
+  let locate span t goal =
+    Error.Doctor.locate span @@ fun () ->
+    run goal t
 end
 
 type infer = Infer.t
@@ -47,6 +51,10 @@ struct
     try t goal with
     | exn ->
       k exn goal
+      
+  let locate span t goal =
+    Error.Doctor.locate span @@ fun () ->
+    run goal t
 end
 
 type check = Check.t

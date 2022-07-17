@@ -18,8 +18,12 @@ let global_var path shift : T.infer =
   let ulvl = T.Shift.run shift in
   let tm, tp =
     match Eff.resolve path with
-    | ResolveData.Axiom {tp} -> S.axiom path, tp
-    | ResolveData.Def {tp; tm} -> S.def path tm, tp
+    | Some (ResolveData.Axiom {tp}) -> S.axiom path, tp
+    | Some (ResolveData.Def {tp; tm}) -> S.def path tm, tp
+    | None ->
+      let message = Format.asprintf "Variable `%a` is not in scope" S.dump_name path in
+      let cause = "This variable is not in scope" in
+      Error.Doctor.build ~code:NotInScope ~cause ~message |> Error.Doctor.fatal
   in
   S.app tm (Eff.quote ulvl), NbE.app_ulvl ~tp ~ulvl
 

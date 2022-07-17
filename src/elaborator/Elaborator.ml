@@ -56,7 +56,7 @@ let infer_var p s : T.infer =
     R.Structural.global_var p (check_shift s)
 
 let rec infer tm : T.infer =
-  Doctor.locate tm.span @@ fun () ->
+  T.Infer.locate tm.span @@
   match tm.value with
   | CS.Var (p, s) ->
     infer_var p s
@@ -74,7 +74,7 @@ let rec infer tm : T.infer =
     Doctor.build ~code:NotInferable ~cause ~message |> Doctor.fatal
 
 and check tm : T.check =
-  Doctor.locate tm.span @@ fun () ->
+  T.Check.locate tm.span @@
   match tm.value with
   | CS.Pi (base, name, fam) ->
     R.Pi.pi ~name ~cbase:(check base) ~cfam:(fun _ -> check fam)
