@@ -66,7 +66,7 @@ let rec infer tm : T.infer =
   | CS.Snd tm ->
     R.Sigma.snd ~itm:(infer tm)
   | _ ->
-    Error.fatalf NotInferable "@[<2>Could@ not@ infer@ the@ type@ of@ %a@]@." Syntax.dump tm
+    Error.fatalf NotInferable "Could not infer the type of %a" Syntax.dump tm
 
 and check tm : T.check =
   Error.tracef ?loc:tm.loc "When checking against the type %a" Syntax.dump tm @@ fun () ->
