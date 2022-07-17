@@ -1,5 +1,5 @@
+open Asai.Span
 module Syntax = Syntax
-module Errors = Errors
 module Eff = Eff
 
 module CS = Syntax
@@ -9,7 +9,7 @@ module UL = NbE.ULvl
 module R = Refiner
 module T = R.Tactic
 
-let unleash_hole : T.check =
+let unleash_hole loc : T.check =
   T.Check.peek @@ fun goal ->
   let bnds = R.Eff.Generalize.quote_ctx () in
 
@@ -24,7 +24,7 @@ let unleash_hole : T.check =
       R.Eff.eval @@
       List.fold_right make_pi bnds @@ R.Eff.quote goal.tp
     in
-    Eff.unleash None @@ R.ResolveData.Axiom {tp}
+    Eff.unleash ?loc None @@ R.ResolveData.Axiom {tp}
   in
 
   T.Check.infer @@
@@ -48,13 +48,13 @@ let infer_var p s : T.infer =
   | Some cell, None ->
     R.Structural.local_var cell
   | Some _, Some _ ->
-    Format.eprintf "@[<2>Local@ variable@ %a@ could@ not@ have@ level@ shifting@]@." Syntax.dump_name p;
-    Eff.not_inferable ~tm:{node = CS.Var (p, s); loc = None}
+    Error.fatalf NotInferable "Local variable %a could not have level shifting" Syntax.dump_name p
   | None, _ ->
     R.Structural.global_var p (check_shift s)
 
 let rec infer tm : T.infer =
-  match tm.CS.node with
+  Error.tracef ?loc:tm.loc "When inferring %a" Syntax.dump tm @@ fun () ->
+  match tm.value with
   | CS.Var (p, s) ->
     infer_var p s
   | CS.Ann {tm; tp} ->
@@ -66,11 +66,11 @@ let rec infer tm : T.infer =
   | CS.Snd tm ->
     R.Sigma.snd ~itm:(infer tm)
   | _ ->
-    (* Format.eprintf "@[<2>Could@ not@ infer@ the@ type@ of@ %a@]@." Syntax.dump tm; *)
-    Eff.not_inferable ~tm
+    Error.fatalf NotInferable "@[<2>Could@ not@ infer@ the@ type@ of@ %a@]@." Syntax.dump tm
 
 and check tm : T.check =
-  match tm.CS.node with
+  Error.tracef ?loc:tm.loc "When checking against the type %a" Syntax.dump tm @@ fun () ->
+  match tm.value with
   | CS.Pi (base, name, fam) ->
     R.Pi.pi ~name ~cbase:(check base) ~cfam:(fun _ -> check fam)
   | CS.VirPi (base, name, fam) ->
@@ -84,20 +84,13 @@ and check tm : T.check =
   | CS.Univ s ->
     R.Univ.univ (check_shift s)
   | CS.Hole ->
-    unleash_hole
+    unleash_hole tm.loc
   | _ -> T.Check.infer (infer tm)
 
 
 (* the public interface *)
 
-let trap (f : unit -> 'a) : ('a, Errors.t) Result.t =
-  try Result.ok (f ()) with
-  | R.Eff.Error (R.Errors.Conversion (u,v)) -> Result.error (Errors.Conversion (u,v))
-  | Eff.Error e -> Result.error e
-
-
 let infer_top lhs tm =
-  trap @@ fun () ->
   let tm, tp =
     R.Eff.with_top_env @@ fun () ->
     let tm, tp = T.Infer.run {lhs} @@ infer tm in
@@ -106,7 +99,6 @@ let infer_top lhs tm =
   S.lam tm, NbE.eval_top @@ S.vir_pi S.tp_ulvl tp
 
 let check_tp_top lhs tp =
-  trap @@ fun () ->
   let tp =
     R.Eff.with_top_env @@ fun () ->
     T.Check.run {tp = D.univ_top; lhs} @@ check tp
@@ -114,7 +106,6 @@ let check_tp_top lhs tp =
   S.vir_pi S.tp_ulvl tp
 
 let check_top lhs tm ~tp =
-  trap @@ fun () ->
   S.lam @@
   R.Eff.with_top_env @@ fun () ->
   let ulvl = T.Shift.run @@ R.ULvl.base in
