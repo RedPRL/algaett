@@ -4,6 +4,9 @@
   bwd
   algaeff
   yuujinchou
+  asai
+  asai.unix
+  algaett.error
   algaett.elaborator
   algaett.interpreter
   algaett.parser)

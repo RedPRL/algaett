@@ -1,26 +1,6 @@
 module E = Elaborator
 module D = NbE.Domain
 
-type error =
-  | NotInScope of Yuujinchou.Trie.path
-  | NotInferable of {tm : Syntax.t}
-  | IllTyped of {tm : Syntax.t; tp : NbE.Domain.t}
-  | Conversion of NbE.Domain.t * NbE.Domain.t
-
-exception Error of error
-
-let trap f = try Result.ok (f ()) with Error e -> Result.error e
-
-let reraise_elaborator =
-  function
-  | Ok v -> v
-  | Error (E.Errors.NotInferable {tm}) -> raise (Error (NotInferable {tm}))
-  | Error (E.Errors.IllTyped {tm; tp}) -> raise (Error (IllTyped {tm; tp}))
-  | Error (E.Errors.Conversion (u, v)) -> raise (Error (Conversion (u, v)))
-
-
-let not_in_scope n = raise (Error (NotInScope n))
-
 type _ Effect.t +=
   | Load : Bantorra.Manager.path -> Refiner.ResolveData.t Yuujinchou.Trie.Untagged.t Effect.t
   | Preload : Bantorra.Manager.path -> unit Effect.t
@@ -51,9 +31,14 @@ module S =
       type context = Syntax.empty
     end)
 
+let not_in_scope n =
+  let message = Format.asprintf "Variable `%a` is not in scope" Syntax.dump_name n in
+  let cause = "This variable is not in scope" in
+  Error.Doctor.build ~code:NotInScope ~cause ~message |> Error.Doctor.fatal
 
-let include_singleton ?loc (p, data) =
-  let id = Used.new_ (Used.Local {node = p; loc}) in
+
+let include_singleton span (p, data) =
+  let id = Used.new_ (Used.Local {value = p; span}) in
   S.include_singleton (p, (data, id))
 
 let section p =
@@ -63,8 +48,8 @@ let get_export () =
   Yuujinchou.Trie.Untagged.untag @@
   S.get_export ()
 
-let import ?loc u m =
-  let id = Used.new_ (Imported {node = u; loc}) in
+let import span u m =
+  let id = Used.new_ (Imported {value = u; span}) in
   let u = S.modify m @@ Yuujinchou.Trie.retag id @@ load u in
   S.import_subtree ([], u)
 
@@ -84,7 +69,7 @@ struct
       | None -> not_in_scope p
       | Some (data, tag) -> Used.use tag; data
 
-    let unleash (name : Syntax.bound_name) data =
+    let unleash span (name : Syntax.bound_name) data =
       let p =
         match name with
         | Some p -> p
@@ -93,7 +78,7 @@ struct
           counter := i + 1;
           ["_"; Int.to_string i]
       in
-      include_singleton (p, data); p
+      include_singleton span (p, data); p
   end
 
   module ScopeH : S.Handler =

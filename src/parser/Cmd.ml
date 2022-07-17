@@ -10,7 +10,8 @@ let parser section_ = cmd*
 and section = located section_
 and parser cmd_ =
   | def name:(Term.bound_name) colon tp:(Term.term) assign tm:(Term.term) ->
-      S.Def {name; tm = {node = S.Ann {tm; tp}; loc = None}}
+     (* TODO: change this to store the tp and tm separately so we can recall their spans *)
+      S.DefChk {name; tm ; tp}
   | def name:(Term.bound_name) assign tm:(Term.term) ->
       S.Def {name; tm}
   | axiom name:(Term.bound_name) colon tp:(Term.term) ->
