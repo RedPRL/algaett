@@ -5,11 +5,11 @@ module S = NbE.Syntax
 module D = NbE.Domain
 module UL = NbE.ULvl
 
-type _ Effect.t += Resolve : Yuujinchou.Trie.path -> ResolveData.t Effect.t
+type _ Effect.t += Resolve : Yuujinchou.Trie.path -> ResolveData.t option Effect.t
 
 module type Handler =
 sig
-  val resolve : Yuujinchou.Trie.path -> ResolveData.t
+  val resolve : Yuujinchou.Trie.path -> ResolveData.t option
 end
 
 module Run (H : Handler) =
@@ -31,12 +31,6 @@ struct
 end
 
 include Perform
-
-exception Error of Errors.t
-
-let not_convertible u v = raise @@ Error (Conversion (u, v))
-
-let trap f = try Result.ok (f ()) with Error e -> Result.error e
 
 type env = {
   blessed_ulvl : D.t;

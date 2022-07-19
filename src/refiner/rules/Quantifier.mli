@@ -1,7 +1,8 @@
 open Tactic
 
 type rule =
-  name:Yuujinchou.Trie.path option
+  conn:Error.Doctor.connective
+  -> name:Yuujinchou.Trie.path option
   -> cbase:check
   -> cfam:check binder
   -> (NbE.Syntax.t -> NbE.Syntax.t -> NbE.Syntax.t)

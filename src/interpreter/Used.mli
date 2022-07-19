@@ -1,6 +1,6 @@
 type info =
-  | Imported of Bantorra.Manager.path Elaborator.Syntax.node
-  | Local of Yuujinchou.Trie.path Elaborator.Syntax.node
+  | Imported of Bantorra.Manager.path Asai.Loc.t
+  | Local of Yuujinchou.Trie.path Asai.Loc.t
 
 type id
 val compare_id : id -> id -> int

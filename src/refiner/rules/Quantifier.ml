@@ -1,13 +1,14 @@
 open RuleKit
 
 type rule =
-  name:Yuujinchou.Trie.path option
+  conn:E.Doctor.connective
+  -> name:Yuujinchou.Trie.path option
   -> cbase:T.check
   -> cfam:T.check T.binder
   -> (S.t -> S.t -> S.t)
   -> T.check
 
-let auxiliary ~name ~cbase ~cbase_sort ~cfam builder : T.check =
+let auxiliary ~conn ~name ~cbase ~cbase_sort ~cfam builder : T.check =
   T.Check.rule @@ fun goal ->
   match goal.tp with
   | D.Univ _ ->
@@ -19,11 +20,12 @@ let auxiliary ~name ~cbase ~cbase_sort ~cfam builder : T.check =
     in
     builder base fam
   | _ ->
-    invalid_arg "quantifier"
+    let tp = Eff.quote goal.tp in
+    E.Doctor.expected_connective_check conn S.dump tp
 
 
-let quantifier ~name ~cbase ~cfam builder : T.check =
-  auxiliary ~name ~cbase ~cbase_sort:(fun univ -> univ) ~cfam builder
+let quantifier ~conn ~name ~cbase ~cfam builder : T.check =
+  auxiliary ~conn ~name ~cbase ~cbase_sort:(fun univ -> univ) ~cfam builder
 
-let vir_quantifier ~name ~cbase ~cfam builder : T.check =
-  auxiliary ~name ~cbase ~cbase_sort:(fun _ -> D.VirUniv) ~cfam builder
+let vir_quantifier ~conn ~name ~cbase ~cfam builder : T.check =
+  auxiliary ~conn ~name ~cbase ~cbase_sort:(fun _ -> D.VirUniv) ~cfam builder

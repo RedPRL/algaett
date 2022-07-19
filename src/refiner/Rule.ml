@@ -14,6 +14,10 @@ struct
   type t = goal -> result
   let rule t = t
   let run goal t = t goal
+
+  let locate span t goal =
+    Error.Doctor.locate span @@ fun () ->
+    run goal t
 end
 
 type infer = Infer.t
@@ -35,13 +39,22 @@ struct
     fun goal ->
     let tm', tp' = Infer.run Infer.{lhs = goal.lhs} inf in
     try Eff.equate tp' `LE goal.tp; tm' with
-    | NbE.Unequal -> Eff.not_convertible goal.tp tp'
+    | NbE.Unequal -> 
+      let tp = Eff.quote goal.tp in
+      let tp' = Eff.quote tp' in
+      let message = Format.dprintf "Expected %a to be convertible with %a" S.dump tp S.dump tp' in
+      let cause = Format.dprintf "Needed a term of type %a but got a term of type %a" S.dump tp S.dump tp' in
+      Error.Doctor.build ~code:Conversion ~cause ~message |> Error.Doctor.fatal
 
   let orelse t k : t =
     rule @@ fun goal ->
     try t goal with
     | exn ->
       k exn goal
+      
+  let locate span t goal =
+    Error.Doctor.locate span @@ fun () ->
+    run goal t
 end
 
 type check = Check.t

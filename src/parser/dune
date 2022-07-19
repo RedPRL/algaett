@@ -4,6 +4,7 @@
   (action
    (run pa_ocaml %{input-file})))
  (libraries
+  asai
   bwd
   algaeff
   yuujinchou
