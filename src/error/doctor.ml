@@ -49,11 +49,11 @@ let dump_conn fmt : connective -> _ = function
   | `TpULvl -> Format.fprintf fmt "TpULvl"
 
 let expected_connective_check conn fmt x =
-  let message = Format.asprintf "You are trying to construct an element of a %a type but you are checking against %a" dump_conn conn fmt x in
-  let cause = Format.asprintf "This term cannot be checked against %a" fmt x in
+  let message = Format.dprintf "You are trying to construct an element of a %a type but you are checking against %a" dump_conn conn fmt x in
+  let cause = Format.dprintf "This term cannot be checked against %a" fmt x in
   build ~code:IllTyped ~cause ~message |> fatal
 
 let expected_connective_infer conn fmt x =
-  let message = Format.asprintf "You are trying to eliminate an element of a %a type but you have an element of %a" dump_conn conn fmt x in
-  let cause = Format.asprintf "This term being eliminated in this expression does not have a %a type" dump_conn conn in
+  let message = Format.dprintf "You are trying to eliminate an element of a %a type but you have an element of %a" dump_conn conn fmt x in
+  let cause = Format.dprintf "This term being eliminated in this expression does not have a %a type" dump_conn conn in
   build ~code:IllTyped ~cause ~message |> fatal

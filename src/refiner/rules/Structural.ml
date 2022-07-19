@@ -21,8 +21,8 @@ let global_var path shift : T.infer =
     | Some (ResolveData.Axiom {tp}) -> S.axiom path, tp
     | Some (ResolveData.Def {tp; tm}) -> S.def path tm, tp
     | None ->
-      let message = Format.asprintf "Variable `%a` is not in scope" S.dump_name path in
-      let cause = "This variable is not in scope" in
+      let message = Format.dprintf "Variable `%a` is not in scope" S.dump_name path in
+      let cause = Format.dprintf "This variable is not in scope" in
       Error.Doctor.build ~code:NotInScope ~cause ~message |> Error.Doctor.fatal
   in
   S.app tm (Eff.quote ulvl), NbE.app_ulvl ~tp ~ulvl

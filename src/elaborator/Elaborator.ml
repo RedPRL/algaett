@@ -49,8 +49,8 @@ let infer_var p s : T.infer =
   | Some (cell, ()), None ->
     R.Structural.local_var cell
   | Some _, Some _ ->
-    let message = Format.asprintf "Cannot level shift local variable `%a`" Syntax.dump_name p in
-    let cause = "You're trying to shift this local variable" in
+    let message = Format.dprintf "Cannot level shift local variable `%a`" Syntax.dump_name p in
+    let cause = Format.dprintf "You're trying to shift this local variable" in
     Doctor.build ~code:NotInferable ~cause ~message |> Doctor.fatal
   | None, _ ->
     R.Structural.global_var p (check_shift s)
@@ -69,8 +69,8 @@ let rec infer tm : T.infer =
   | CS.Snd tm ->
     R.Sigma.snd ~itm:(infer tm)
   | _ ->
-    let message = Format.asprintf "Could not infer the type of %a" Syntax.dump tm in
-    let cause = "Could not infer the type of this term" in
+    let message = Format.dprintf "Could not infer the type of %a" Syntax.dump tm in
+    let cause = Format.dprintf "Could not infer the type of this term" in
     Doctor.build ~code:NotInferable ~cause ~message |> Doctor.fatal
 
 and check tm : T.check =

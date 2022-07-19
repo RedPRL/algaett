@@ -42,8 +42,8 @@ struct
     | NbE.Unequal -> 
       let tp = Eff.quote goal.tp in
       let tp' = Eff.quote tp' in
-      let message = Format.asprintf "Expected %a to be convertible with %a" S.dump tp S.dump tp' in
-      let cause = Format.asprintf "Needed a term of type %a but got a term of type %a" S.dump tp S.dump tp' in
+      let message = Format.dprintf "Expected %a to be convertible with %a" S.dump tp S.dump tp' in
+      let cause = Format.dprintf "Needed a term of type %a but got a term of type %a" S.dump tp S.dump tp' in
       Error.Doctor.build ~code:Conversion ~cause ~message |> Error.Doctor.fatal
 
   let orelse t k : t =

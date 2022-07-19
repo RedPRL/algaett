@@ -9,11 +9,11 @@ let univ shift =
     then S.univ (Eff.quote vsmall)
     else begin
       let pp_lvl = Mugen.Syntax.Free.dump NbE.ULvl.Shift.dump Format.pp_print_int in
-      let message = Format.asprintf "@[<2>Universe@ level@ %a@ is@ not@ smaller@ than@ %a@]@."
+      let message = Format.dprintf "@[<2>Universe@ level@ %a@ is@ not@ smaller@ than@ %a@]@."
         pp_lvl (UL.of_con vsmall)
         pp_lvl (UL.of_con large)
       in
-      let cause = "This type is too large to fit in the universe it is being checked against" in
+      let cause = Format.dprintf "This type is too large to fit in the universe it is being checked against" in
       E.Doctor.build ~code:IllTyped ~cause ~message |> E.Doctor.fatal
     end
   | tp ->
