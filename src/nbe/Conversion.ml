@@ -4,7 +4,7 @@ module D = Domain
 
 let rec force_all =
   function
-  | D.Unfold (_, _, v) -> force_all (Lazy.force v)
+  | D.Unfold (_, _, v) -> force_all (SyncLazy.force v)
   | v -> v
 
 type env =
@@ -97,13 +97,13 @@ let rec equate v1 dir v2 =
            According to Andras, using `Rigid here will probably make the elaborator too optimistic,
            backtracking too many times, but this claim has not been carefully verified against
            "real" codebase. *)
-        with_mode `Full @@ fun () -> equate (Lazy.force v1) dir (Lazy.force v2)
+        with_mode `Full @@ fun () -> equate (SyncLazy.force v1) dir (SyncLazy.force v2)
     else
-      equate (Lazy.force v1) dir (Lazy.force v2)
+      equate (SyncLazy.force v1) dir (SyncLazy.force v2)
   | D.Unfold (_, _, v1), dir, v2, `Rigid ->
-    equate (Lazy.force v1) dir v2
+    equate (SyncLazy.force v1) dir v2
   | v1, dir, D.Unfold (_, _, v2), `Rigid ->
-    equate v1 dir (Lazy.force v2)
+    equate v1 dir (SyncLazy.force v2)
   | D.Unfold _, _, _, `Full | _, _, D.Unfold _, `Full ->
     failwith "imposseble: force did not unfold all Domain.Unfold"
 

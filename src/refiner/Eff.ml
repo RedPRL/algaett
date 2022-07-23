@@ -41,14 +41,14 @@ let trap f = try Result.ok (f ()) with Error e -> Result.error e
 type env = {
   blessed_ulvl : D.t;
   local_names : (D.cell, unit) Yuujinchou.Trie.t;
-  locals : D.cell Lazy.t bwd;
+  locals : D.cell SyncLazy.t bwd;
   size : int;
 }
 
 let top_env = {
   blessed_ulvl = D.lvl 0;
   local_names = Yuujinchou.Trie.empty;
-  locals = Emp #< (Lazy.from_val @@ D.{tm = D.lvl 0; tp = D.TpULvl});
+  locals = Emp #< (SyncLazy.from_val @@ D.{tm = D.lvl 0; tp = D.TpULvl});
   size = 1;
 }
 
@@ -58,7 +58,7 @@ module Eff = Algaeff.Reader.Make (struct type nonrec env = env end)
 let with_top_env f = Eff.run ~env:top_env f
 
 let nbe_env () =
-  (Eff.read()).locals |> Bwd.map @@ Lazy.map @@ fun cell -> cell.D.tm
+  (Eff.read()).locals |> Bwd.map @@ SyncLazy.map @@ fun cell -> cell.D.tm
 
 let eval tm =
   let env = nbe_env () in
@@ -66,7 +66,7 @@ let eval tm =
 
 let lazy_eval tm =
   let env = nbe_env () in
-  lazy begin NbE.eval ~env tm end
+  SyncLazy.from_lazy @@ lazy begin NbE.eval ~env tm end
 
 let quote v =
   NbE.quote ~size:(Eff.read()).size v
@@ -79,7 +79,7 @@ let resolve_local p =
 
 let resolve_level lvl =
   let env = (Eff.read()).locals in
-  Option.map Lazy.force @@ Bwd.nth_opt env lvl
+  Option.map SyncLazy.force @@ Bwd.nth_opt env lvl
 
 let bind ~name ~tp f =
   let arg = D.lvl (Eff.read()).size in
@@ -87,7 +87,7 @@ let bind ~name ~tp f =
   let update env =
     {blessed_ulvl = env.blessed_ulvl;
      size = env.size + 1;
-     locals = env.locals #< (Lazy.from_val cell);
+     locals = env.locals #< (SyncLazy.from_val cell);
      local_names =
        match name with
        | None -> env.local_names
@@ -111,7 +111,7 @@ struct
       function
       | [] -> nil ()
       | lcell :: env ->
-        let cell = Lazy.force lcell in
+        let cell = SyncLazy.force lcell in
         let arg = quote cell.D.tm in
         let bnd =
           let tp = quote cell.D.tp in

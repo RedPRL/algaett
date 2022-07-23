@@ -16,7 +16,7 @@ let rec execute_decl {CS.node = decl; CS.loc = loc} =
   | CS.Def {name; tm} ->
     let lhs = Option.fold ~none:NbE.LHS.unknown ~some:NbE.LHS.head name in
     let tm, tp = UE.reraise_elaborator @@ Elaborator.infer_top lhs tm in
-    include_singleton ?loc name @@ Def {tm = lazy begin NbE.eval_top tm end; tp}
+    include_singleton ?loc name @@ Def {tm = SyncLazy.from_lazy @@ lazy begin NbE.eval_top tm end; tp}
   | CS.Import {unit_path; modifier} ->
     UE.import ?loc unit_path modifier
   | CS.Section {prefix; block} ->

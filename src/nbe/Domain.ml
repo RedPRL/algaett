@@ -2,7 +2,7 @@ open Bwd
 
 module S = Syntax
 
-type env = Data.value Lazy.t bwd (* invariant: lazy values must be effect-less *)
+type env = Data.value SyncLazy.t bwd (* invariant: lazy values must be effect-less *)
 
 type closure = Data.closure = Clo of {body : S.t; env : env}
 
@@ -28,7 +28,7 @@ type cut_head = Data.cut_head =
   | Axiom of Yuujinchou.Trie.path (* not used for now *)
 
 type unfold_head = Data.unfold_head =
-  | Def of Yuujinchou.Trie.path * con Lazy.t
+  | Def of Yuujinchou.Trie.path * con SyncLazy.t
 
 type frame = Data.frame =
   | App of con

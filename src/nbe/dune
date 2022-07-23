@@ -1,4 +1,4 @@
 (library
  (name NbE)
- (libraries bwd algaeff bantorra mugen yuujinchou)
+ (libraries bwd algaeff bantorra mugen yuujinchou algaett.synclazy)
  (public_name algaett.nbe))

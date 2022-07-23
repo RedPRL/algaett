@@ -1,0 +1,3 @@
+(library
+ (name SyncLazy)
+ (public_name algaett.synclazy))
