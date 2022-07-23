@@ -8,7 +8,7 @@ type global = Bantorra.Manager.path * int
 type syn =
   | Var of int
   | Axiom of Yuujinchou.Trie.path
-  | Def of Yuujinchou.Trie.path * value Lazy.t
+  | Def of Yuujinchou.Trie.path * value SyncLazy.t
   | Pi of syn * (* binding *) syn
   | Lam of (* binding *) syn
   | App of syn * syn
@@ -22,7 +22,7 @@ type syn =
   | ULvl of (ULvlShift.t, syn) Mugen.Syntax.endo
   | VirUniv
 
-and env = value Lazy.t bwd (* invariant: lazy values must be effect-less *)
+and env = value SyncLazy.t bwd (* invariant: lazy values must be effect-less *)
 
 and closure = Clo of {body : syn; env : env}
 
@@ -41,14 +41,14 @@ and value =
 
 and cut = cut_head * frame bwd
 
-and unfold = unfold_head * frame bwd * value Lazy.t (* invariant: lazy values must be effect-less *)
+and unfold = unfold_head * frame bwd * value SyncLazy.t (* invariant: lazy values must be effect-less *)
 
 and cut_head =
   | Lvl of int
   | Axiom of Yuujinchou.Trie.path
 
 and unfold_head =
-  | Def of Yuujinchou.Trie.path * value Lazy.t
+  | Def of Yuujinchou.Trie.path * value SyncLazy.t
 
 and frame =
   | App of value

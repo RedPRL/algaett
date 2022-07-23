@@ -17,7 +17,7 @@ struct
     let env = env #< arg in
     Eff.run ~env @@ fun () -> eval body
 
-  and inst_clo' clo arg = inst_clo clo @@ Lazy.from_val arg
+  and inst_clo' clo arg = inst_clo clo @@ SyncLazy.from_val arg
 
   and app v0 v1 =
     match v0 with
@@ -25,7 +25,7 @@ struct
     | D.Cut (hd, frms) ->
       D.Cut (hd, frms #< (D.App v1))
     | D.Unfold (hd, frms, v0) ->
-      D.Unfold (hd, frms #< (D.App v1), Lazy.map (fun v0 -> app v0 v1) v0)
+      D.Unfold (hd, frms #< (D.App v1), SyncLazy.map (fun v0 -> app v0 v1) v0)
     | _ -> invalid_arg "Evaluation.app"
 
   and fst : D.t -> D.t =
@@ -34,7 +34,7 @@ struct
     | D.Cut (hd, frms) ->
       D.Cut (hd, frms #< D.Fst)
     | D.Unfold (hd, frms, v0) ->
-      D.Unfold (hd, frms #< D.Fst, Lazy.map fst v0)
+      D.Unfold (hd, frms #< D.Fst, SyncLazy.map fst v0)
     | _ -> invalid_arg "Evaluation.fst"
 
   and snd : D.t -> D.t =
@@ -43,7 +43,7 @@ struct
     | D.Cut (hd, frms) ->
       D.Cut (hd, frms #< D.Snd)
     | D.Unfold (hd, frms, v0) ->
-      D.Unfold (hd, frms #< D.Snd, Lazy.map snd v0)
+      D.Unfold (hd, frms #< D.Snd, SyncLazy.map snd v0)
     | _ -> invalid_arg "Evaluation.snd"
 
   and eval_ulvl =
@@ -54,7 +54,7 @@ struct
 
   and eval : S.t -> D.t =
     function
-    | S.Var idx -> Lazy.force (of_idx idx)
+    | S.Var idx -> SyncLazy.force (of_idx idx)
     | S.Axiom p -> D.Cut (D.Axiom p, Emp)
     | S.Def (p, v) -> D.def p v
     | S.Pi (base, (* binding *) fam) -> D.Pi (eval base, make_clo fam)

@@ -13,7 +13,7 @@ let rec of_con =
   function
   | Domain.Cut (Lvl i, Emp) -> var i
   | Domain.ULvl endo -> of_endo endo
-  | Domain.Unfold (_, _, v) -> of_con (Lazy.force v)
+  | Domain.Unfold (_, _, v) -> of_con (SyncLazy.force v)
   | _ -> invalid_arg "of_con"
 
 and of_endo =

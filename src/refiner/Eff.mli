@@ -20,7 +20,7 @@ val resolve_level : int -> NbE.Domain.cell option
 (** invariant: the return values must be effect-less *)
 val eval : NbE.Syntax.t -> NbE.Domain.t
 
-val lazy_eval : NbE.Syntax.t -> NbE.Domain.t Lazy.t
+val lazy_eval : NbE.Syntax.t -> NbE.Domain.t SyncLazy.t
 val equate : NbE.Domain.t -> [ `EQ | `GE | `LE ] -> NbE.Domain.t -> unit
 
 val quote : NbE.Domain.t -> NbE.Syntax.t
