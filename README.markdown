@@ -22,7 +22,7 @@ Here are some notable differences:
 
 ## Our OCaml packages
 
-- [algaeff](https://redprl.org/algaeff/algaeff/Algaeff): reusable effect-based components
+- [algaeff](https://redprl.org/algaeff/algaeff/Algaeff): reusable effects-based components
 - [bantorra](https://redprl.org/bantorra/bantorra/Bantorra): unit resolution _(not used yet)_
 - [bwd](https://redprl.org/bwd/bwd/Bwd): backward lists
 - [mugen](https://redprl.org/mugen/mugen/Mugen): universe levels
