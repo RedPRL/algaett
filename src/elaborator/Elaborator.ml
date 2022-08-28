@@ -49,12 +49,12 @@ let infer_var p s : T.infer =
     R.Structural.local_var cell
   | Some _, Some _ ->
     Format.eprintf "@[<2>Local@ variable@ %a@ could@ not@ have@ level@ shifting@]@." Syntax.dump_name p;
-    Eff.not_inferable ~tm:{node = CS.Var (p, s); loc = None}
+    Eff.not_inferable ~tm:{value = CS.Var (p, s); loc = None}
   | None, _ ->
     R.Structural.global_var p (check_shift s)
 
 let rec infer tm : T.infer =
-  match tm.CS.node with
+  match tm.Asai.Span.value with
   | CS.Var (p, s) ->
     infer_var p s
   | CS.Ann {tm; tp} ->
@@ -70,7 +70,7 @@ let rec infer tm : T.infer =
     Eff.not_inferable ~tm
 
 and check tm : T.check =
-  match tm.CS.node with
+  match tm.Asai.Span.value with
   | CS.Pi (base, name, fam) ->
     R.Pi.pi ~name ~cbase:(check base) ~cfam:(fun _ -> check fam)
   | CS.VirPi (base, name, fam) ->

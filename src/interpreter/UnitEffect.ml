@@ -53,7 +53,7 @@ module S =
 
 
 let include_singleton ?loc (p, data) =
-  let id = Used.new_ (Used.Local {node = p; loc}) in
+  let id = Used.new_ (Used.Local {value = p; loc}) in
   S.include_singleton (p, (data, id))
 
 let section p =
@@ -64,7 +64,7 @@ let get_export () =
   S.get_export ()
 
 let import ?loc u m =
-  let id = Used.new_ (Imported {node = u; loc}) in
+  let id = Used.new_ (Imported {value = u; loc}) in
   let u = S.modify m @@ Yuujinchou.Trie.retag id @@ load u in
   S.import_subtree ([], u)
 

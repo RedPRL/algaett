@@ -10,14 +10,13 @@ let lexing_position i c =
   }
 
 let locate i1 c1 i2 c2 =
-  Elaborator.Syntax.{
-    start = lexing_position i1 c1;
-    stop = lexing_position i2 c2;
-  }
+  let open Asai.Span in
+  make (of_lex_position @@ lexing_position i1 c1)
+    (of_lex_position @@ lexing_position i2 c2)
 
 let located p =
-  p |> Earley.apply_position @@ fun i1 c1 i2 c2 x ->
-  Elaborator.Syntax.{
-    node = x;
+  p |> Earley.apply_position @@ fun i1 c1 i2 c2 value ->
+  Asai.Span.{
+    value;
     loc = Some (locate i1 c1 i2 c2);
   }

@@ -9,8 +9,8 @@ type error =
 val execute : Syntax.prog -> (unit, error) result
 
 type unused_info =
-  | Imported of Bantorra.Manager.path Elaborator.Syntax.node
-  | Local of Yuujinchou.Trie.path Elaborator.Syntax.node
+  | Imported of Bantorra.Manager.path Asai.Span.located
+  | Local of Yuujinchou.Trie.path Asai.Span.located
 
 module type Handler = UnitEffect.Handler
 module Perform : Handler

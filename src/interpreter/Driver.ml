@@ -8,7 +8,7 @@ let include_singleton ?loc name data =
   | None -> ()
   | Some p -> UE.include_singleton ?loc (p, data)
 
-let rec execute_decl {CS.node = decl; CS.loc = loc} =
+let rec execute_decl {Asai.Span.value = decl; Asai.Span.loc} =
   match decl with
   | CS.Axiom {name; tp} ->
     let tp = NbE.eval_top @@ UE.reraise_elaborator @@ Elaborator.check_tp_top NbE.LHS.unknown tp in
@@ -24,7 +24,7 @@ let rec execute_decl {CS.node = decl; CS.loc = loc} =
   | CS.Quit -> raise Quit
 
 and execute_section sec =
-  List.iter execute_decl sec.CS.node
+  List.iter execute_decl sec.Asai.Span.value
 
 let execute prog =
   UnitEffect.trap @@ fun () -> try execute_section prog with Quit -> ()

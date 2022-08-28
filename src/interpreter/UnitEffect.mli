@@ -7,8 +7,8 @@ type error =
 val reraise_elaborator : ('a, Elaborator.Errors.t) result -> 'a
 val trap : (unit -> 'a) -> ('a, error) result
 
-val include_singleton : ?loc:Elaborator.Syntax.span -> (Yuujinchou.Trie.path * Refiner.ResolveData.t) -> unit
-val import : ?loc:Elaborator.Syntax.span -> Bantorra.Manager.path -> Syntax.modifier -> unit
+val include_singleton : ?loc:Asai.Span.t -> (Yuujinchou.Trie.path * Refiner.ResolveData.t) -> unit
+val import : ?loc:Asai.Span.t -> Bantorra.Manager.path -> Syntax.modifier -> unit
 val section : Yuujinchou.Trie.path -> (unit -> 'a) -> 'a
 val get_export : unit -> Refiner.ResolveData.t Yuujinchou.Trie.Untagged.t
 
