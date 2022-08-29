@@ -12,10 +12,17 @@ let run_interpreter =
 
 module Terminal = Asai_unix.Make(Error.Logger.Code)
 
-let load =
-  function
-  | `File filename ->
-    let prog = Parser.parse_file filename in
-    Error.Logger.run ~emit:Terminal.display ~fatal:Terminal.display @@ fun () ->
-    run_interpreter @@ fun () ->
-    Interpreter.execute prog
+let load input mode =
+  let display = match mode with
+    | Some ("--debug" | "-d") -> Terminal.display ~display_traces:true
+    | Some ("--interactive" | "-i") -> Terminal.interactive_trace
+    | Some _ -> failwith "unknown arg"
+    | None -> Terminal.display ~display_traces:false
+  in 
+  match input with
+    | `File filename ->
+      let prog = Parser.parse_file filename in
+      Error.Logger.run ~emit:display ~fatal:display @@ fun () ->
+      run_interpreter @@ fun () ->
+      Interpreter.execute prog
+

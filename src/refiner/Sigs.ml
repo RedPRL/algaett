@@ -6,6 +6,8 @@ sig
   val run : goal -> t -> result
   val locate : loc:Asai.Span.t option -> t -> t
 
+  val trace : ?loc:Asai.Span.t -> string -> t -> t
+
 end
 
 module type CheckPublic =
@@ -23,8 +25,9 @@ sig
   val infer : infer -> t
 
   val locate : loc:Asai.Span.t option -> t -> t
-end
 
+  val trace : ?loc:Asai.Span.t -> string -> t -> t
+end
 module type ShiftPublic =
 sig
   type t

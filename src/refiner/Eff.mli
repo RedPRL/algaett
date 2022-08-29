@@ -8,7 +8,7 @@ val loc : unit -> Asai.Span.t option
 
 module type Handler =
 sig
-  val resolve : Yuujinchou.Trie.path Asai.Span.located -> ResolveData.t
+  val resolve : Yuujinchou.Trie.path -> ResolveData.t option
 end
 
 module Perform : Handler

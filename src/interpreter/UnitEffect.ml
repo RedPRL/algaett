@@ -59,11 +59,10 @@ struct
   struct
     let counter = ref 0
 
-    let resolve Asai.Span.{value = p ; loc} =
+    let resolve p =
       match S.resolve p with
-      | None -> 
-        Error.Logger.fatalf ?loc ~code:NotInScope "The variable '%a' is not in scope" Elaborator.Syntax.dump_name p
-      | Some (data, tag) -> Used.use tag; data
+      | None -> None
+      | Some (data, tag) -> Used.use tag; Some data
 
     let unleash (name : Syntax.bound_name) data =
       let p =

@@ -17,9 +17,11 @@ let global_var path shift : T.infer =
   T.Infer.rule @@ fun _ ->
   let ulvl = T.Shift.run shift in
   let tm, tp =
-    match Eff.resolve {value = path ; loc = Eff.loc()} with
-    | ResolveData.Axiom {tp} -> S.axiom path, tp
-    | ResolveData.Def {tp; tm} -> S.def path tm, tp
+    match Eff.resolve path with
+    | Some ResolveData.Axiom {tp} -> S.axiom path, tp
+    | Some ResolveData.Def {tp; tm} -> S.def path tm, tp
+    | None -> Error.Logger.fatalf ?loc:(Eff.loc ()) ~code:NotInScope "The variable '%a' is not in scope" S.dump_name path
+
   in
   S.app tm (Eff.quote ulvl), NbE.app_ulvl ~tp ~ulvl
 

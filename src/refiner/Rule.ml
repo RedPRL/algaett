@@ -15,8 +15,14 @@ struct
   let rule t = t
   let run goal t = t goal
 
-  let locate ~loc t goal =
-    Eff.locate ~loc@@ fun () ->
+  let locate ~loc t =
+    rule @@ fun goal ->
+    Eff.locate ~loc @@ fun () ->
+    run goal t
+    
+  let trace ?loc msg t =
+    rule @@ fun goal ->
+    Error.Logger.tracef ?loc "%s" msg @@ fun () ->
     run goal t
 end
 
@@ -46,8 +52,15 @@ struct
     try t goal with
     | exn ->
       k exn goal
-  let locate ~loc t goal =
+
+  let locate ~loc t : t =
+    rule @@ fun goal ->
     Eff.locate ~loc @@ fun () ->
+    run goal t
+  
+  let trace ?loc msg t =
+    rule @@ fun goal ->
+    Error.Logger.tracef ?loc "%s" msg @@ fun () ->
     run goal t
 end
 

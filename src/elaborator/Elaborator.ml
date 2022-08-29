@@ -53,8 +53,10 @@ let infer_var p s : T.infer =
     R.Structural.global_var p (check_shift s)
 
 let rec infer tm : T.infer =
-  T.Infer.locate ~loc:tm.Asai.Span.loc @@
-  match tm.Asai.Span.value with
+  let open Asai.Span in
+  T.Infer.locate ~loc:tm.loc @@
+  T.Infer.trace ?loc:tm.loc "While inferring" @@
+  match tm.value with
   | CS.Var (p, s) ->
     infer_var p s
   | CS.Ann {tm; tp} ->
@@ -66,12 +68,14 @@ let rec infer tm : T.infer =
   | CS.Snd tm ->
     R.Sigma.snd ~itm:(infer tm)
   | _ ->
-    (* Format.eprintf "@[<2>Could@ not@ infer@ the@ type@ of@ %a@]@." Syntax.dump tm; *)
     Eff.not_inferable ~tm
 
 and check tm : T.check =
-  T.Check.locate ~loc:tm.Asai.Span.loc @@
-  match tm.Asai.Span.value with
+  let open Asai.Span in
+  T.Check.locate ~loc:tm.loc @@
+  T.Check.peek @@ fun goal ->
+  T.Check.trace ?loc:tm.loc (Format.asprintf "While checking against %a" S.dump (R.Eff.quote goal.tp)) @@
+  match tm.value with
   | CS.Pi (base, name, fam) ->
     R.Pi.pi ~name ~cbase:(check base) ~cfam:(fun _ -> check fam)
   | CS.VirPi (base, name, fam) ->
