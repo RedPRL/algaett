@@ -1,0 +1,4 @@
+(library
+ (name Error)
+ (libraries asai.unix)
+ (public_name algaett.error))

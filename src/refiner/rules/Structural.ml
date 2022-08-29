@@ -17,7 +17,7 @@ let global_var path shift : T.infer =
   T.Infer.rule @@ fun _ ->
   let ulvl = T.Shift.run shift in
   let tm, tp =
-    match Eff.resolve path with
+    match Eff.resolve {value = path ; loc = Eff.loc()} with
     | ResolveData.Axiom {tp} -> S.axiom path, tp
     | ResolveData.Def {tp; tm} -> S.def path tm, tp
   in

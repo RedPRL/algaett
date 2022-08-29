@@ -1,14 +1,14 @@
-exception Error of Errors.t
-
 val bind : name:Yuujinchou.Trie.path option -> tp:NbE.Domain.t -> (NbE.Domain.cell -> 'a) -> 'a
-
-val trap : (unit -> 'a) -> ('a, Errors.t) Result.t
 
 val blessed_ulvl : unit -> NbE.Domain.t
 
+val locate : loc:Asai.Span.t option -> (unit -> 'a) -> 'a
+
+val loc : unit -> Asai.Span.t option
+
 module type Handler =
 sig
-  val resolve : Yuujinchou.Trie.path -> ResolveData.t
+  val resolve : Yuujinchou.Trie.path Asai.Span.located -> ResolveData.t
 end
 
 module Perform : Handler

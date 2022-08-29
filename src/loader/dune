@@ -4,7 +4,9 @@
   bwd
   algaeff
   yuujinchou
+  asai.unix
   algaett.elaborator
   algaett.interpreter
-  algaett.parser)
+  algaett.parser
+  algaett.error)
  (public_name algaett.loader))

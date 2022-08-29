@@ -1,15 +1,15 @@
 open Bwd
-open BwdNotation
+open Bwd.Infix
 
 module S = NbE.Syntax
 module D = NbE.Domain
 module UL = NbE.ULvl
 
-type _ Effect.t += Resolve : Yuujinchou.Trie.path -> ResolveData.t Effect.t
+type _ Effect.t += Resolve : Yuujinchou.Trie.path Asai.Span.located -> ResolveData.t Effect.t
 
 module type Handler =
 sig
-  val resolve : Yuujinchou.Trie.path -> ResolveData.t
+  val resolve : Yuujinchou.Trie.path Asai.Span.located -> ResolveData.t
 end
 
 module Run (H : Handler) =
@@ -32,13 +32,8 @@ end
 
 include Perform
 
-exception Error of Errors.t
-
-let not_convertible u v = raise @@ Error (Conversion (u, v))
-
-let trap f = try Result.ok (f ()) with Error e -> Result.error e
-
 type env = {
+  loc : Asai.Span.t option;
   blessed_ulvl : D.t;
   local_names : (D.cell, unit) Yuujinchou.Trie.t;
   locals : D.cell SyncLazy.t bwd;
@@ -46,6 +41,7 @@ type env = {
 }
 
 let top_env = {
+  loc = None;
   blessed_ulvl = D.lvl 0;
   local_names = Yuujinchou.Trie.empty;
   locals = Emp #< (SyncLazy.from_val @@ D.{tm = D.lvl 0; tp = D.TpULvl});
@@ -85,7 +81,7 @@ let bind ~name ~tp f =
   let arg = D.lvl (Eff.read()).size in
   let cell = D.{tm = arg; tp} in
   let update env =
-    {blessed_ulvl = env.blessed_ulvl;
+    { env with
      size = env.size + 1;
      locals = env.locals #< (SyncLazy.from_val cell);
      local_names =
@@ -102,7 +98,17 @@ let bind ~name ~tp f =
 let blessed_ulvl () =
   (Eff.read()).blessed_ulvl
 
-module Generalize =
+let loc () =
+  (Eff.read()).loc
+
+let locate ~loc k =
+  Eff.scope (fun env -> {env with loc = loc}) k
+
+let not_convertible u v =
+  Error.Logger.fatalf ?loc:(loc ()) ~code:Conversion 
+  "Expected %a to be convertible with %a" S.dump (quote u) S.dump (quote v)
+
+  module Generalize =
 struct
   type bnd = VirType of S.t | Type of S.t
 

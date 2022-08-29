@@ -1,5 +1,4 @@
 module Syntax = Syntax
-module Errors = Errors
 module Eff = Eff
 
 module CS = Syntax
@@ -54,6 +53,7 @@ let infer_var p s : T.infer =
     R.Structural.global_var p (check_shift s)
 
 let rec infer tm : T.infer =
+  T.Infer.locate ~loc:tm.Asai.Span.loc @@
   match tm.Asai.Span.value with
   | CS.Var (p, s) ->
     infer_var p s
@@ -70,6 +70,7 @@ let rec infer tm : T.infer =
     Eff.not_inferable ~tm
 
 and check tm : T.check =
+  T.Check.locate ~loc:tm.Asai.Span.loc @@
   match tm.Asai.Span.value with
   | CS.Pi (base, name, fam) ->
     R.Pi.pi ~name ~cbase:(check base) ~cfam:(fun _ -> check fam)
@@ -90,14 +91,7 @@ and check tm : T.check =
 
 (* the public interface *)
 
-let trap (f : unit -> 'a) : ('a, Errors.t) Result.t =
-  try Result.ok (f ()) with
-    | R.Eff.Error (R.Errors.Conversion (u,v)) -> Result.error (Errors.Conversion (u,v))
-    | Eff.Error e -> Result.error e
-
-
 let infer_top lhs tm =
-  trap @@ fun () ->
   let tm, tp =
     R.Eff.with_top_env @@ fun () ->
     let tm, tp = T.Infer.run {lhs} @@ infer tm in
@@ -106,7 +100,6 @@ let infer_top lhs tm =
   S.lam tm, NbE.eval_top @@ S.vir_pi S.tp_ulvl tp
 
 let check_tp_top lhs tp =
-  trap @@ fun () ->
   let tp =
     R.Eff.with_top_env @@ fun () ->
     T.Check.run {tp = D.univ_top; lhs} @@ check tp
@@ -114,7 +107,6 @@ let check_tp_top lhs tp =
   S.vir_pi S.tp_ulvl tp
 
 let check_top lhs tm ~tp =
-  trap @@ fun () ->
   S.lam @@
   R.Eff.with_top_env @@ fun () ->
   let ulvl = T.Shift.run @@ R.ULvl.base in

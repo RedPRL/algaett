@@ -2,8 +2,6 @@ module CS = Syntax
 module D = NbE.Domain
 module R = Refiner
 
-exception Error of Errors.t
-
 type _ Effect.t += Unleash : CS.bound_name * R.ResolveData.t -> CS.name Effect.t
 
 module type Handler =
@@ -34,5 +32,5 @@ end
 
 include Perform
 
-let not_inferable ~tm = raise @@ Error (NotInferable {tm})
-let ill_typed ~tm ~tp = raise @@ Error (IllTyped {tm; tp})
+let not_inferable ~tm:Asai.Span.{value; loc} =
+  Error.Logger.fatalf ?loc ~code:NotInferable "Could not infer a type for this term"

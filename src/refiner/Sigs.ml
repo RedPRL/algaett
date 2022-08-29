@@ -4,6 +4,8 @@ sig
   type goal = {lhs : NbE.LHS.t}
   type result = NbE.Syntax.t * NbE.Domain.t
   val run : goal -> t -> result
+  val locate : loc:Asai.Span.t option -> t -> t
+
 end
 
 module type CheckPublic =
@@ -19,6 +21,8 @@ sig
   val peek : (goal -> t) -> t
   val orelse : t -> (exn -> t) -> t
   val infer : infer -> t
+
+  val locate : loc:Asai.Span.t option -> t -> t
 end
 
 module type ShiftPublic =

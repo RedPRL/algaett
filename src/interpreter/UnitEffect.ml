@@ -1,26 +1,6 @@
 module E = Elaborator
 module D = NbE.Domain
 
-type error =
-  | NotInScope of Yuujinchou.Trie.path
-  | NotInferable of {tm : Syntax.t}
-  | IllTyped of {tm : Syntax.t; tp : NbE.Domain.t}
-  | Conversion of NbE.Domain.t * NbE.Domain.t
-
-exception Error of error
-
-let trap f = try Result.ok (f ()) with Error e -> Result.error e
-
-let reraise_elaborator =
-  function
-  | Ok v -> v
-  | Error (E.Errors.NotInferable {tm}) -> raise (Error (NotInferable {tm}))
-  | Error (E.Errors.IllTyped {tm; tp}) -> raise (Error (IllTyped {tm; tp}))
-  | Error (E.Errors.Conversion (u, v)) -> raise (Error (Conversion (u, v)))
-
-
-let not_in_scope n = raise (Error (NotInScope n))
-
 type _ Effect.t +=
   | Load : Bantorra.Manager.path -> Refiner.ResolveData.t Yuujinchou.Trie.Untagged.t Effect.t
   | Preload : Bantorra.Manager.path -> unit Effect.t
@@ -79,9 +59,10 @@ struct
   struct
     let counter = ref 0
 
-    let resolve p =
+    let resolve Asai.Span.{value = p ; loc} =
       match S.resolve p with
-      | None -> not_in_scope p
+      | None -> 
+        Error.Logger.fatalf ?loc ~code:NotInScope "The variable '%a' is not in scope" Elaborator.Syntax.dump_name p
       | Some (data, tag) -> Used.use tag; data
 
     let unleash (name : Syntax.bound_name) data =

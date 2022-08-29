@@ -10,9 +10,12 @@ module HandleInterpreter = Interpreter.Run (InterpreterHandler)
 let run_interpreter =
   HandleInterpreter.run
 
+module Terminal = Asai_unix.Make(Error.Logger.Code)
+
 let load =
   function
   | `File filename ->
     let prog = Parser.parse_file filename in
-    Result.get_ok @@ run_interpreter @@ fun () ->
+    Error.Logger.run ~emit:Terminal.display ~fatal:Terminal.display @@ fun () ->
+    run_interpreter @@ fun () ->
     Interpreter.execute prog

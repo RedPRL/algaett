@@ -1,12 +1,3 @@
-type error =
-  | NotInScope of Yuujinchou.Trie.path
-  | NotInferable of {tm: Syntax.t}
-  | IllTyped of {tm: Syntax.t; tp: NbE.Domain.t}
-  | Conversion of NbE.Domain.t * NbE.Domain.t
-
-val reraise_elaborator : ('a, Elaborator.Errors.t) result -> 'a
-val trap : (unit -> 'a) -> ('a, error) result
-
 val include_singleton : ?loc:Asai.Span.t -> (Yuujinchou.Trie.path * Refiner.ResolveData.t) -> unit
 val import : ?loc:Asai.Span.t -> Bantorra.Manager.path -> Syntax.modifier -> unit
 val section : Yuujinchou.Trie.path -> (unit -> 'a) -> 'a
