@@ -47,8 +47,7 @@ let infer_var p s : T.infer =
   | Some (cell, ()), None ->
     R.Structural.local_var cell
   | Some _, Some _ ->
-    Format.eprintf "@[<2>Local@ variable@ %a@ could@ not@ have@ level@ shifting@]@." Syntax.dump_name p;
-    Eff.not_inferable ~tm:{value = CS.Var (p, s); loc = None}
+    Error.Logger.fatalf ?loc:(R.Eff.loc ()) ~code:NotInferable "@[<2>Local@ variable@ '%a'@ could@ not@ have@ level@ shifting@]@." Syntax.dump_name p
   | None, _ ->
     R.Structural.global_var p (check_shift s)
 
