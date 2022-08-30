@@ -104,10 +104,6 @@ let loc () =
 let locate ~loc k =
   Eff.scope (fun env -> {env with loc = loc}) k
 
-let not_convertible u v =
-  Error.Logger.fatalf ?loc:(loc ()) ~code:Conversion 
-    "Expected %a to be convertible with %a" S.dump (quote u) S.dump (quote v)
-
 module Generalize =
 struct
   type bnd = VirType of S.t | Type of S.t
