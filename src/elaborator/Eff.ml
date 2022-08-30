@@ -32,5 +32,3 @@ end
 
 include Perform
 
-let not_inferable ~tm:Asai.Span.{value; loc} =
-  Error.Logger.fatalf ?loc ~code:NotInferable "Could not infer a type for this term"

@@ -10,8 +10,8 @@ let univ shift =
     else begin
       let pp_lvl = Mugen.Syntax.Free.dump NbE.ULvl.Shift.dump Format.pp_print_int in
       Error.Logger.fatalf ?loc:(Eff.loc ()) ~code:IllTyped "@[<2>Universe@ level@ %a@ is@ not@ smaller@ than@ %a@]@."
-      pp_lvl (UL.of_con vsmall)
-      pp_lvl (UL.of_con large)
+        pp_lvl (UL.of_con vsmall)
+        pp_lvl (UL.of_con large)
     end
   | tp ->
     Error.Connective.check ?loc:(Eff.loc ()) `Univ S.dump (Eff.quote tp)

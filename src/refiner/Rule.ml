@@ -19,10 +19,10 @@ struct
     rule @@ fun goal ->
     Eff.locate ~loc @@ fun () ->
     run goal t
-    
+
   let trace ?loc msg t =
     rule @@ fun goal ->
-    Error.Logger.tracef ?loc "%s" msg @@ fun () ->
+    Error.Logger.tracef ?loc "%t" msg @@ fun () ->
     run goal t
 end
 
@@ -47,8 +47,8 @@ struct
     try Eff.equate tp' `LE goal.tp; tm' with
     | NbE.Unequal -> 
       Error.Logger.fatalf ?loc:(Eff.loc ()) ~code:Conversion 
-      "Expected %a to be convertible with %a" S.dump (Eff.quote tp') S.dump (Eff.quote goal.tp)
-    
+        "Expected %a to be convertible with %a" S.dump (Eff.quote tp') S.dump (Eff.quote goal.tp)
+
   let orelse t k : t =
     rule @@ fun goal ->
     try t goal with
@@ -59,10 +59,10 @@ struct
     rule @@ fun goal ->
     Eff.locate ~loc @@ fun () ->
     run goal t
-  
+
   let trace ?loc msg t =
     rule @@ fun goal ->
-    Error.Logger.tracef ?loc "%s" msg @@ fun () ->
+    Error.Logger.tracef ?loc "%t" msg @@ fun () ->
     run goal t
 end
 

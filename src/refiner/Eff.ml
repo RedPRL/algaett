@@ -82,16 +82,16 @@ let bind ~name ~tp f =
   let cell = D.{tm = arg; tp} in
   let update env =
     { env with
-     size = env.size + 1;
-     locals = env.locals #< (SyncLazy.from_val cell);
-     local_names =
-       match name with
-       | None -> env.local_names
-       | Some name ->
-         Yuujinchou.Trie.update_singleton
-           name
-           (fun _ -> Some (cell, ()))
-           env.local_names}
+      size = env.size + 1;
+      locals = env.locals #< (SyncLazy.from_val cell);
+      local_names =
+        match name with
+        | None -> env.local_names
+        | Some name ->
+          Yuujinchou.Trie.update_singleton
+            name
+            (fun _ -> Some (cell, ()))
+            env.local_names}
   in
   Eff.scope update @@ fun () -> f cell
 
@@ -106,9 +106,9 @@ let locate ~loc k =
 
 let not_convertible u v =
   Error.Logger.fatalf ?loc:(loc ()) ~code:Conversion 
-  "Expected %a to be convertible with %a" S.dump (quote u) S.dump (quote v)
+    "Expected %a to be convertible with %a" S.dump (quote u) S.dump (quote v)
 
-  module Generalize =
+module Generalize =
 struct
   type bnd = VirType of S.t | Type of S.t
 

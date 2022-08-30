@@ -54,7 +54,7 @@ let infer_var p s : T.infer =
 let rec infer tm : T.infer =
   let open Asai.Span in
   T.Infer.locate ~loc:tm.loc @@
-  T.Infer.trace ?loc:tm.loc "While inferring" @@
+  T.Infer.trace ?loc:tm.loc (Format.dprintf "While inferring") @@
   match tm.value with
   | CS.Var (p, s) ->
     infer_var p s
@@ -73,7 +73,7 @@ and check tm : T.check =
   let open Asai.Span in
   T.Check.locate ~loc:tm.loc @@
   T.Check.peek @@ fun goal ->
-  T.Check.trace ?loc:tm.loc (Format.asprintf "While checking against %a" S.dump (R.Eff.quote goal.tp)) @@
+  T.Check.trace ?loc:tm.loc (Format.dprintf "While checking against %a" S.dump (R.Eff.quote goal.tp)) @@
   match tm.value with
   | CS.Pi (base, name, fam) ->
     R.Pi.pi ~name ~cbase:(check base) ~cfam:(fun _ -> check fam)

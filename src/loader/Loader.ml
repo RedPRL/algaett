@@ -20,9 +20,9 @@ let load input mode =
     | None -> Terminal.display ~display_traces:false
   in 
   match input with
-    | `File filename ->
-      let prog = Parser.parse_file filename in
-      Error.Logger.run ~emit:display ~fatal:display @@ fun () ->
-      run_interpreter @@ fun () ->
-      Interpreter.execute prog
+  | `File filename ->
+    let prog = Parser.parse_file filename in
+    Error.Logger.run ~emit:display ~fatal:display @@ fun () ->
+    run_interpreter @@ fun () ->
+    Interpreter.execute prog
 

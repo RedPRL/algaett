@@ -6,7 +6,7 @@ sig
   val run : goal -> t -> result
   val locate : loc:Asai.Span.t option -> t -> t
 
-  val trace : ?loc:Asai.Span.t -> string -> t -> t
+  val trace : ?loc:Asai.Span.t -> (Format.formatter -> unit) -> t -> t
 
 end
 
@@ -26,7 +26,7 @@ sig
 
   val locate : loc:Asai.Span.t option -> t -> t
 
-  val trace : ?loc:Asai.Span.t -> string -> t -> t
+  val trace : ?loc:Asai.Span.t -> (Format.formatter -> unit) -> t -> t
 end
 module type ShiftPublic =
 sig

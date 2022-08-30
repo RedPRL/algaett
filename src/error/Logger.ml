@@ -8,10 +8,10 @@ module Code : Asai.Code.S with type t = code =
 struct
   type t = code
   let default_severity = let open Asai.Severity in function
-    | NotInScope -> Error
-    | NotInferable -> Error
-    | IllTyped -> Error
-    | Conversion -> Error
+      | NotInScope -> Error
+      | NotInferable -> Error
+      | IllTyped -> Error
+      | Conversion -> Error
 
   let to_string = function
     | NotInScope -> 
