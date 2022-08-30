@@ -67,7 +67,7 @@ let rec infer tm : T.infer =
   | CS.Snd tm ->
     R.Sigma.snd ~itm:(infer tm)
   | _ ->
-    Eff.not_inferable ~tm
+    Error.Logger.fatalf ?loc:tm.loc ~code:NotInferable "Could not infer a type for this term"
 
 and check tm : T.check =
   let open Asai.Span in

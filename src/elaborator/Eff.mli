@@ -12,4 +12,3 @@ end
 module Perform : Handler
 include module type of Perform
 
-val not_inferable : tm:Syntax.t -> 'a

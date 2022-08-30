@@ -25,8 +25,6 @@ val equate : NbE.Domain.t -> [ `EQ | `GE | `LE ] -> NbE.Domain.t -> unit
 
 val quote : NbE.Domain.t -> NbE.Syntax.t
 
-val not_convertible : NbE.Domain.t -> NbE.Domain.t -> 'a
-
 val with_top_env : (unit -> 'a) -> 'a
 
 module Generalize :

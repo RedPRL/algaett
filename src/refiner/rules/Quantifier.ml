@@ -18,8 +18,8 @@ let auxiliary ~name ~cbase ~cbase_sort ~cfam builder : T.check =
       T.Check.run {tp = goal.tp; lhs = LHS.unknown} @@ cfam x
     in
     builder base fam
-  | _ ->
-    invalid_arg "quantifier"
+  | tp ->
+    Error.Connective.check ?loc:(Eff.loc ()) `Univ S.dump (Eff.quote tp)
 
 
 let quantifier ~name ~cbase ~cfam builder : T.check =

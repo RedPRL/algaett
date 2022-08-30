@@ -45,8 +45,10 @@ struct
     fun goal ->
     let tm', tp' = Infer.run Infer.{lhs = goal.lhs} inf in
     try Eff.equate tp' `LE goal.tp; tm' with
-    | NbE.Unequal -> Eff.not_convertible goal.tp tp'
-
+    | NbE.Unequal -> 
+      Error.Logger.fatalf ?loc:(Eff.loc ()) ~code:Conversion 
+      "Expected %a to be convertible with %a" S.dump (Eff.quote tp') S.dump (Eff.quote goal.tp)
+    
   let orelse t k : t =
     rule @@ fun goal ->
     try t goal with

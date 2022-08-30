@@ -13,8 +13,8 @@ let lam ~name ~cbnd : T.check =
     Eff.bind ~name ~tp:base @@ fun arg ->
     let fib = NbE.inst_clo' fam @@ arg.D.tm in
     S.lam @@ T.Check.run {tp = fib; lhs = LHS.app goal.lhs arg} @@ cbnd arg
-  | _ ->
-    invalid_arg "lam"
+  | tp ->
+    Error.Connective.check ?loc:(Eff.loc ()) `Pi S.dump (Eff.quote tp)
 
 let app ~itm ~ctm : T.infer =
   T.Infer.rule @@ fun _ ->
@@ -24,5 +24,5 @@ let app ~itm ~ctm : T.infer =
     let arg = T.Check.run {tp = base; lhs = LHS.unknown} ctm in
     let fib = NbE.inst_clo fam @@ Eff.lazy_eval arg in
     S.app fn arg, fib
-  | _ ->
-    invalid_arg "app"
+  | tp ->
+    Error.Connective.infer ?loc:(Eff.loc ()) `Pi S.dump (Eff.quote tp)

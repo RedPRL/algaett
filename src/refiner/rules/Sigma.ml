@@ -11,8 +11,8 @@ let pair ~cfst ~csnd : T.check =
     let tp2 = NbE.inst_clo fam @@ Eff.lazy_eval tm1 in
     let tm2 = T.Check.run {tp = tp2; lhs = LHS.snd goal.lhs} csnd in
     S.pair tm1 tm2
-  | _ ->
-    invalid_arg "pair"
+  | tp ->
+    Error.Connective.check ?loc:(Eff.loc ()) `Sigma S.dump (Eff.quote tp)
 
 let fst ~itm : T.infer =
   T.Infer.rule @@ fun _ ->
@@ -21,7 +21,7 @@ let fst ~itm : T.infer =
   | D.Sigma (base, _) ->
     S.fst tm, base
   | _ ->
-    invalid_arg "fst"
+    Error.Connective.infer ?loc:(Eff.loc ()) `Sigma S.dump (Eff.quote tp)
 
 let snd ~itm : T.infer =
   T.Infer.rule @@ fun _ ->
@@ -31,4 +31,4 @@ let snd ~itm : T.infer =
     let tp = NbE.inst_clo fam @@ Eff.lazy_eval @@ S.fst tm in
     S.snd tm, tp
   | _ ->
-    invalid_arg "snd"
+    Error.Connective.infer ?loc:(Eff.loc ()) `Sigma S.dump (Eff.quote tp)
