@@ -5,7 +5,7 @@ let univ shift =
   match goal.tp with
   | D.Univ large ->
     let vsmall = T.Shift.run shift in
-    if UL.(<) (UL.of_con vsmall) (UL.of_con large)
+    if UL.lt (UL.of_con vsmall) (UL.of_con large)
     then S.univ (Eff.quote vsmall)
     else begin
       let pp_lvl = Mugen.Syntax.Free.dump NbE.ULvl.Shift.dump Format.pp_print_int in
