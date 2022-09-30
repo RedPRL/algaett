@@ -23,10 +23,11 @@ Here are some notable differences:
 ## Our OCaml packages
 
 - [algaeff](https://redprl.org/algaeff/algaeff/Algaeff): reusable effects-based components
-- [bantorra](https://redprl.org/bantorra/bantorra/Bantorra): unit resolution _(not used yet)_
+- [asai](https://redprl.org/asai/asai/Asai): error messages _(not used yet)_
+- [bantorra](https://redprl.org/bantorra/bantorra): unit resolution _(not used yet)_
 - [bwd](https://redprl.org/bwd/bwd/Bwd): backward lists
 - [mugen](https://redprl.org/mugen/mugen/Mugen): universe levels
-- [yuujinchou](https://redprl.org/yuujinchou/yuujinchou/Yuujinchou): namespaces
+- [yuujinchou](https://redprl.org/yuujinchou/yuujinchou): namespaces and name modifier
 
 ## Beyong LR
 
