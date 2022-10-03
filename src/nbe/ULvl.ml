@@ -1,13 +1,12 @@
 module Shift = Data.ULvlShift
 
-module P = struct
-  module Shift = Shift
-  type var = int
-  let equal_var = Int.equal
-end
-
-include Mugen.Builder.Free.Make (P)
-include Mugen.Theory.Make (P)
+include
+  Mugen.Theory.Free.Make
+    (struct
+      module Shift = Shift
+      type var = int
+      let equal_var = Int.equal
+    end)
 
 let rec of_con =
   function

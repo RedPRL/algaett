@@ -30,12 +30,3 @@ let vir_pi base fam = VirPi (base, fam)
 let tp_ulvl = TpULvl
 let ulvl l = ULvl l
 let vir_univ = VirUniv
-
-module ULvl =
-  Mugen.Builder.Endo.Make
-    (struct
-      module Shift = Data.ULvlShift
-      type level = t
-      let level l = ULvl l
-      let unlevel = function ULvl l -> Some l | _ -> None
-    end)
