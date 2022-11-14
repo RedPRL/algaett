@@ -1,7 +1,7 @@
 module Shift = Data.ULvlShift
 
 include
-  Mugen.Theory.Free.Make
+  Mugen.Semantics.Free.Make
     (struct
       module Shift = Shift
       type var = int

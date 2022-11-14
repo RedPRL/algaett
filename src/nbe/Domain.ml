@@ -42,7 +42,7 @@ let lvl l = Cut (Lvl l, Emp)
 let def p v = Unfold (Def (p, v), Emp, v)
 
 module ULvl =
-  Mugen.Theory.Endo.Make
+  Mugen.Semantics.Endo.Make
     (struct
       module Shift = Data.ULvlShift
       type level = t
