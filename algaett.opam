@@ -16,15 +16,14 @@ depends: [
   "cmdliner" {>= "1.1"}
   "earley" {>= "3.0"}
   "emoji" {>= "1.2"}
-  "yuujinchou" {>= "3.1"}
+  "mugen" {>= "0.1"}
+  "yuujinchou" {>= "4.0"}
   "odoc" {with-doc}
   "bantorra"
-  "mugen"
 ]
 pin-depends: [
   [ "bantorra.0.2.0~dev" "git+https://github.com/RedPRL/bantorra" ]
   [ "emoji.1.2.0~pre" "git+https://github.com/fxfactorial/ocaml-emoji" ]
-  [ "mugen.0.1.0~dev" "git+https://github.com/RedPRL/mugen" ]
 ]
 build: [
   ["dune" "build" "-p" name "-j" jobs]
