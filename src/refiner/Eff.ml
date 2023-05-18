@@ -40,7 +40,7 @@ let trap f = try Result.ok (f ()) with Error e -> Result.error e
 
 type env = {
   blessed_ulvl : D.t;
-  local_names : (D.cell, unit) Yuujinchou.Trie.t;
+  local_names : D.cell Yuujinchou.Trie.Untagged.t;
   locals : D.cell SyncLazy.t bwd;
   size : int;
 }
@@ -75,7 +75,7 @@ let equate v =
   NbE.equate ~size:(Eff.read()).size v
 
 let resolve_local p =
-  Yuujinchou.Trie.find_singleton p (Eff.read()).local_names
+  Yuujinchou.Trie.Untagged.find_singleton p (Eff.read()).local_names
 
 let resolve_level lvl =
   let env = (Eff.read()).locals in

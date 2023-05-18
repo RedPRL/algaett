@@ -45,7 +45,7 @@ let check_shift (s : CS.shift list option) : T.shift =
 
 let infer_var p s : T.infer =
   match R.Eff.resolve_local p, s with
-  | Some (cell, ()), None ->
+  | Some cell, None ->
     R.Structural.local_var cell
   | Some _, Some _ ->
     Format.eprintf "@[<2>Local@ variable@ %a@ could@ not@ have@ level@ shifting@]@." Syntax.dump_name p;
@@ -92,8 +92,8 @@ and check tm : T.check =
 
 let trap (f : unit -> 'a) : ('a, Errors.t) Result.t =
   try Result.ok (f ()) with
-    | R.Eff.Error (R.Errors.Conversion (u,v)) -> Result.error (Errors.Conversion (u,v))
-    | Eff.Error e -> Result.error e
+  | R.Eff.Error (R.Errors.Conversion (u,v)) -> Result.error (Errors.Conversion (u,v))
+  | Eff.Error e -> Result.error e
 
 
 let infer_top lhs tm =

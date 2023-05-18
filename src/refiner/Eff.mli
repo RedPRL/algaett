@@ -14,7 +14,7 @@ end
 module Perform : Handler
 include module type of Perform
 
-val resolve_local : Yuujinchou.Trie.path -> (NbE.Domain.cell * unit) option (* TODO: what is the unit for? *)
+val resolve_local : Yuujinchou.Trie.path -> NbE.Domain.cell option
 val resolve_level : int -> NbE.Domain.cell option
 
 (** invariant: the return values must be effect-less *)
