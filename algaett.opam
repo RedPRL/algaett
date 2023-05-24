@@ -17,7 +17,7 @@ depends: [
   "earley" {>= "3.0"}
   "emoji" {>= "1.2"}
   "mugen" {>= "0.1"}
-  "yuujinchou" {>= "4.0"}
+  "yuujinchou" {>= "5.0"}
   "odoc" {with-doc}
   "bantorra"
 ]

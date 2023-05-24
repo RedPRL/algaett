@@ -1,7 +1,7 @@
 (env (static (flags (:standard -ccopt "-static -s"))))
 
-(executables
- (names Main)
+(executable
+ (name Main)
  (libraries cmdliner algaett.parser algaett.interpreter algaett.loader))
 
 (install

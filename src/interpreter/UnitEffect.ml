@@ -42,15 +42,14 @@ end
 
 open Perform
 
-module S =
-  Yuujinchou.Scope.Make
-    (struct
-      type data = Refiner.ResolveData.t
-      type tag = Used.id
-      type hook = Syntax.empty
-      type context = Syntax.empty
-    end)
-
+module P = struct
+  type data = Refiner.ResolveData.t
+  type tag = Used.id
+  type hook = Syntax.empty
+  type context = Syntax.empty
+end
+module M = Yuujinchou.Modifier.Make(P)
+module S = Yuujinchou.Scope.Make(P)(M)
 
 let include_singleton ?loc (p, data) =
   let id = Used.new_ (Used.Local {node = p; loc}) in
@@ -65,8 +64,8 @@ let get_export () =
 
 let import ?loc u m =
   let id = Used.new_ (Imported {node = u; loc}) in
-  let u = S.modify m @@ Yuujinchou.Trie.retag id @@ load u in
-  S.import_subtree ([], u)
+  let u = Yuujinchou.Trie.retag id @@ load u in
+  S.import_subtree ~modifier:m ([], u)
 
 module Run (H : Handler) =
 struct
@@ -96,21 +95,12 @@ struct
       include_singleton (p, data); p
   end
 
-  module ScopeH : S.Handler =
-  struct
-    let not_found _ _ = ()
-    let shadow _ _ _ y = y
-    let hook _ _ : Syntax.empty -> _ =
-      function _ -> .
-  end
-
   module UsedR = Used.Run (UsedH)
   module ElabR = E.Eff.Run (ElabH)
-  module ScopeR = S.Run (ScopeH)
 
   let prerun f =
     UsedR.run @@ fun () ->
-    ScopeR.run @@ fun () ->
+    S.run @@ fun () ->
     let ans = ElabR.run f in
     Seq.iter Used.use @@ Yuujinchou.Trie.set_of_tags Used.compare_id @@ S.get_export ();
     ans
