@@ -48,8 +48,7 @@ module P = struct
   type hook = Syntax.empty
   type context = Syntax.empty
 end
-module M = Yuujinchou.Modifier.Make(P)
-module S = Yuujinchou.Scope.Make(P)(M)
+module S = Yuujinchou.Scope.Make(P)
 
 let include_singleton ?loc (p, data) =
   let id = Used.new_ (Used.Local {node = p; loc}) in
