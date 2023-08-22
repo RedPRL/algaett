@@ -13,12 +13,12 @@ let head p = Some (p, Emp)
 
 let app h cell =
   h |> Option.map @@ fun (p, sp) ->
-  p, sp #< (Ap cell)
+  p, sp <: Ap cell
 
 let fst =
   Option.map @@ fun (p, sp) ->
-  p, sp #< Fst
+  p, sp <: Fst
 
 let snd =
   Option.map @@ fun (p, sp) ->
-  p, sp #< Snd
+  p, sp <: Snd

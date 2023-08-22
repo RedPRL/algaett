@@ -14,7 +14,7 @@ struct
   let of_idx idx = BwdLabels.nth (Eff.read()) idx
 
   let rec inst_clo (D.Clo {body; env}) arg : D.t =
-    let env = env #< arg in
+    let env = env <: arg in
     Eff.run ~env @@ fun () -> eval body
 
   and inst_clo' clo arg = inst_clo clo @@ SyncLazy.from_val arg
@@ -23,27 +23,27 @@ struct
     match v0 with
     | D.Lam clo -> inst_clo' clo v1
     | D.Cut (hd, frms) ->
-      D.Cut (hd, frms #< (D.App v1))
+      D.Cut (hd, frms <: D.App v1)
     | D.Unfold (hd, frms, v0) ->
-      D.Unfold (hd, frms #< (D.App v1), SyncLazy.map (fun v0 -> app v0 v1) v0)
+      D.Unfold (hd, frms <: D.App v1, SyncLazy.map (fun v0 -> app v0 v1) v0)
     | _ -> invalid_arg "Evaluation.app"
 
   and fst : D.t -> D.t =
     function
     | D.Pair (v0, _) -> v0
     | D.Cut (hd, frms) ->
-      D.Cut (hd, frms #< D.Fst)
+      D.Cut (hd, frms <: D.Fst)
     | D.Unfold (hd, frms, v0) ->
-      D.Unfold (hd, frms #< D.Fst, SyncLazy.map fst v0)
+      D.Unfold (hd, frms <: D.Fst, SyncLazy.map fst v0)
     | _ -> invalid_arg "Evaluation.fst"
 
   and snd : D.t -> D.t =
     function
     | D.Pair (_, v1) -> v1
     | D.Cut (hd, frms) ->
-      D.Cut (hd, frms #< D.Snd)
+      D.Cut (hd, frms <: D.Snd)
     | D.Unfold (hd, frms, v0) ->
-      D.Unfold (hd, frms #< D.Snd, SyncLazy.map snd v0)
+      D.Unfold (hd, frms <: D.Snd, SyncLazy.map snd v0)
     | _ -> invalid_arg "Evaluation.snd"
 
   and eval_ulvl =

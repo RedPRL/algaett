@@ -48,7 +48,7 @@ type env = {
 let top_env = {
   blessed_ulvl = D.lvl 0;
   local_names = Yuujinchou.Trie.empty;
-  locals = Emp #< (SyncLazy.from_val @@ D.{tm = D.lvl 0; tp = D.TpULvl});
+  locals = Emp <: SyncLazy.from_val @@ D.{tm = D.lvl 0; tp = D.TpULvl};
   size = 1;
 }
 
@@ -87,7 +87,7 @@ let bind ~name ~tp f =
   let update env =
     {blessed_ulvl = env.blessed_ulvl;
      size = env.size + 1;
-     locals = env.locals #< (SyncLazy.from_val cell);
+     locals = env.locals <: SyncLazy.from_val cell;
      local_names =
        match name with
        | None -> env.local_names

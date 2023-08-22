@@ -12,7 +12,7 @@ depends: [
   "dune" {>= "2.0"}
   "ocaml" {>= "5.0"}
   "algaeff" {>= "0.2"}
-  "bwd" {>= "1.1"}
+  "bwd" {>= "2.2"}
   "cmdliner" {>= "1.1"}
   "earley" {>= "3.0"}
   "emoji" {>= "1.2"}
