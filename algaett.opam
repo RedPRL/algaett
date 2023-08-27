@@ -20,13 +20,11 @@ depends: [
   "yuujinchou" {>= "5.0"}
   "odoc" {with-doc}
   "bantorra"
-  "mugen"
   "asai"
 ]
 pin-depends: [
   [ "bantorra.0.2.0~dev" "git+https://github.com/RedPRL/bantorra" ]
   [ "emoji.1.2.0~pre" "git+https://github.com/fxfactorial/ocaml-emoji" ]
-  [ "mugen.0.1.0~dev" "git+https://github.com/RedPRL/mugen" ]
   [ "asai.~dev" "git+https://github.com/RedPRL/asai"]
 ]
 build: [
