@@ -1,14 +1,10 @@
-exception Error of Errors.t
-
 val bind : name:Yuujinchou.Trie.path option -> tp:NbE.Domain.t -> (NbE.Domain.cell -> 'a) -> 'a
-
-val trap : (unit -> 'a) -> ('a, Errors.t) Result.t
 
 val blessed_ulvl : unit -> NbE.Domain.t
 
 module type Handler =
 sig
-  val resolve : Yuujinchou.Trie.path -> ResolveData.t
+  val resolve : Yuujinchou.Trie.path -> ResolveData.t option
 end
 
 module Perform : Handler
@@ -24,8 +20,6 @@ val lazy_eval : NbE.Syntax.t -> NbE.Domain.t SyncLazy.t
 val equate : NbE.Domain.t -> [ `EQ | `GE | `LE ] -> NbE.Domain.t -> unit
 
 val quote : NbE.Domain.t -> NbE.Syntax.t
-
-val not_convertible : NbE.Domain.t -> NbE.Domain.t -> 'a
 
 val with_top_env : (unit -> 'a) -> 'a
 

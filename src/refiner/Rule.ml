@@ -28,14 +28,17 @@ struct
   let rule t goal = t {goal with tp = NbE.force_all goal.tp}
   let run goal t = t goal
   let peek t =
-    rule @@ fun goal -> 
+    rule @@ fun goal ->
     t goal goal
 
   let infer (inf : infer) : t =
     fun goal ->
     let tm', tp' = Infer.run Infer.{lhs = goal.lhs} inf in
     try Eff.equate tp' `LE goal.tp; tm' with
-    | NbE.Unequal -> Eff.not_convertible goal.tp tp'
+    | NbE.Unequal ->
+      let tp = Eff.quote goal.tp in
+      let tp' = Eff.quote tp' in
+      Error.fatalf Conversion "Needed a term of type %a but got a term of type %a" S.dump tp S.dump tp'
 
   let orelse t k : t =
     rule @@ fun goal ->

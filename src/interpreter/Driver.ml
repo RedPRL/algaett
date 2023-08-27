@@ -1,3 +1,4 @@
+open Asai
 module CS = Syntax
 module UE = UnitEffect
 
@@ -8,14 +9,14 @@ let include_singleton ?loc name data =
   | None -> ()
   | Some p -> UE.include_singleton ?loc (p, data)
 
-let rec execute_decl {CS.node = decl; CS.loc = loc} =
+let rec execute_decl Span.{value = decl; loc} =
   match decl with
   | CS.Axiom {name; tp} ->
-    let tp = NbE.eval_top @@ UE.reraise_elaborator @@ Elaborator.check_tp_top NbE.LHS.unknown tp in
+    let tp = NbE.eval_top @@ Elaborator.check_tp_top NbE.LHS.unknown tp in
     include_singleton ?loc (name : CS.bound_name) @@ Axiom {tp}
   | CS.Def {name; tm} ->
     let lhs = Option.fold ~none:NbE.LHS.unknown ~some:NbE.LHS.head name in
-    let tm, tp = UE.reraise_elaborator @@ Elaborator.infer_top lhs tm in
+    let tm, tp = Elaborator.infer_top lhs tm in
     include_singleton ?loc name @@ Def {tm = SyncLazy.from_lazy @@ lazy begin NbE.eval_top tm end; tp}
   | CS.Import {unit_path; modifier} ->
     UE.import ?loc unit_path modifier
@@ -24,7 +25,7 @@ let rec execute_decl {CS.node = decl; CS.loc = loc} =
   | CS.Quit -> raise Quit
 
 and execute_section sec =
-  List.iter execute_decl sec.CS.node
+  List.iter execute_decl sec.Span.value
 
 let execute prog =
-  UnitEffect.trap @@ fun () -> try execute_section prog with Quit -> ()
+  try execute_section prog with Quit -> ()

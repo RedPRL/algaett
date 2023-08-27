@@ -1,3 +1,5 @@
+module Terminal = Asai_tty.Make(Error.Code)
+
 module InterpreterHandler : Interpreter.Handler =
 struct
   let load _ = raise Not_found
@@ -12,7 +14,7 @@ let run_interpreter =
 
 let load =
   function
-  | `File filename ->
-    let prog = Parser.parse_file filename in
-    Result.get_ok @@ run_interpreter @@ fun () ->
-    Interpreter.execute prog
+  | `File filepath ->
+    Error.run ~emit:Terminal.display ~fatal:Terminal.display @@ fun () ->
+    let prog = Parser.parse_file filepath in
+    run_interpreter @@ fun () -> Interpreter.execute prog

@@ -9,10 +9,10 @@ let univ shift =
     then S.univ (Eff.quote vsmall)
     else begin
       let pp_lvl = Mugen.Syntax.Free.dump NbE.ULvl.Shift.dump Format.pp_print_int in
-      Format.eprintf "@[<2>Universe@ level@ %a@ is@ not@ smaller@ than@ %a@]@."
+      E.fatalf IllTyped
+        "Universe level %a is not smaller than %a. This type is too large to fit into the universe."
         pp_lvl (UL.of_con vsmall)
-        pp_lvl (UL.of_con large);
-      invalid_arg "univ"
+        pp_lvl (UL.of_con large)
     end
-  | _ ->
-    invalid_arg "univ"
+  | tp ->
+    Error.expected_connective_check `Univ S.dump (Eff.quote tp)

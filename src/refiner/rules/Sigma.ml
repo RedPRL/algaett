@@ -1,7 +1,7 @@
 open RuleKit
 
 let sigma ~name ~cbase ~cfam : T.check =
-  Quantifier.quantifier ~name ~cbase ~cfam S.sigma
+  Quantifier.quantifier ~conn:`Sigma ~name ~cbase ~cfam S.sigma
 
 let pair ~cfst ~csnd : T.check =
   T.Check.rule @@ fun goal ->
@@ -11,8 +11,8 @@ let pair ~cfst ~csnd : T.check =
     let tp2 = NbE.inst_clo fam @@ Eff.lazy_eval tm1 in
     let tm2 = T.Check.run {tp = tp2; lhs = LHS.snd goal.lhs} csnd in
     S.pair tm1 tm2
-  | _ ->
-    invalid_arg "pair"
+  | tp ->
+    Error.expected_connective_check `Sigma S.dump (Eff.quote tp)
 
 let fst ~itm : T.infer =
   T.Infer.rule @@ fun _ ->
@@ -21,7 +21,7 @@ let fst ~itm : T.infer =
   | D.Sigma (base, _) ->
     S.fst tm, base
   | _ ->
-    invalid_arg "fst"
+    Error.expected_connective_infer`Sigma S.dump (Eff.quote tp)
 
 let snd ~itm : T.infer =
   T.Infer.rule @@ fun _ ->
@@ -31,4 +31,4 @@ let snd ~itm : T.infer =
     let tp = NbE.inst_clo fam @@ Eff.lazy_eval @@ S.fst tm in
     S.snd tm, tp
   | _ ->
-    invalid_arg "snd"
+    Error.expected_connective_infer `Sigma S.dump (Eff.quote tp)

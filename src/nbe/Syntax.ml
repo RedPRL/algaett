@@ -30,3 +30,49 @@ let vir_pi base fam = VirPi (base, fam)
 let tp_ulvl = TpULvl
 let ulvl l = ULvl l
 let vir_univ = VirUniv
+
+let dump_name fmt n =
+  Format.fprintf fmt "@[%a@]"
+    (Format.pp_print_list ~pp_sep:(fun fmt () -> Format.pp_print_string fmt ".") Format.pp_print_string) n
+
+let dump_shift fmt i =
+  Format.fprintf fmt "%i" (Mugen.Shift.Int.to_int i)
+
+let rec dump fmt =
+  function
+  | Var ix ->
+    Format.fprintf fmt "Var @[%i@]" ix
+  | Lam tm ->
+    Format.fprintf fmt "@[<5>Lam (@[%a@])@]" dump tm
+  | App (tm1, tm2) ->
+    Format.fprintf fmt "@[<5>App (@[%a@],@ @[%a@])@]" dump tm1 dump tm2
+  | Pair (tm1, tm2) ->
+    Format.fprintf fmt "@[<6>Pair (@[%a@],@ @[%a@])@]" dump tm1 dump tm2
+  | Fst tm ->
+    Format.fprintf fmt "Fst @[%a@]" dump tm
+  | Snd tm ->
+    Format.fprintf fmt "Snd @[%a@]" dump tm
+  | Univ l ->
+    Format.fprintf fmt "Univ @[%a@]" dump l
+  | VirPi (base, fam) ->
+    Format.fprintf fmt "@[<7>VirPi (@[%a@],@ @[%a@])@]" dump base dump fam
+  | Pi (base, fam) ->
+    Format.fprintf fmt "@[<7>Pi (@[%a@],@ @[%a@])@]" dump base dump fam
+  | Sigma (base, fam) ->
+    Format.fprintf fmt "@[<7>Sigma (@[%a@],@ @[%a@])@]" dump base dump fam
+  | TpULvl ->
+    Format.fprintf fmt "TpULvl"
+  | VirUniv ->
+    Format.fprintf fmt "VirUniv"
+  | Axiom p ->
+    Format.fprintf fmt "Axiom %a" dump_name p
+  | Def (p, _) ->
+    Format.fprintf fmt "Def %a" dump_name p
+  | ULvl l ->
+    Format.fprintf fmt "ULvl %a" dump_endo l
+
+and dump_endo fmt =
+  Mugen.Syntax.Endo.dump
+    dump_shift
+    dump
+    fmt
