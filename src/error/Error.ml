@@ -21,7 +21,7 @@ struct
     | NotInferable ->
       "We encountered a term for which we could not infer a type"
     | IllTyped ->
-      "We encountered an ill typed term"
+      "We encountered an ill-typed term"
     | Conversion ->
       "We expected two terms to be convertible but they are not"
 end
