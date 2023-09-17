@@ -1,4 +1,4 @@
-module Terminal = Asai_tty.Make(Error.Code)
+module Terminal = Asai.Tty.Make(Error.Code)
 
 module InterpreterHandler : Interpreter.Handler =
 struct

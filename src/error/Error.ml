@@ -7,7 +7,7 @@ struct
     | Conversion
 
   let default_severity =
-    let open Asai.Severity in
+    let open Asai.Diagnostic in
     function
     | NotInScope -> Error
     | NotInferable -> Error
