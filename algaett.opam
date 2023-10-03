@@ -12,6 +12,7 @@ depends: [
   "dune" {>= "2.0"}
   "ocaml" {>= "5.0"}
   "algaeff" {>= "0.2"}
+  "asai" {>= "0.1"}
   "bwd" {>= "2.2"}
   "cmdliner" {>= "1.1"}
   "earley" {>= "3.0"}
@@ -20,12 +21,10 @@ depends: [
   "yuujinchou" {>= "5.0"}
   "odoc" {with-doc}
   "bantorra"
-  "asai"
 ]
 pin-depends: [
   [ "bantorra.0.2.0~dev" "git+https://github.com/RedPRL/bantorra" ]
   [ "emoji.1.2.0~pre" "git+https://github.com/fxfactorial/ocaml-emoji" ]
-  [ "asai.~dev" "git+https://github.com/RedPRL/asai"]
 ]
 build: [
   ["dune" "build" "-p" name "-j" jobs]
