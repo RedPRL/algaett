@@ -18,6 +18,7 @@ let parser atomic_term_ =
   | x:name up s:shift -> S.Var (x, Some s)
   | c:term_constant -> c ~shift:None
   | c:term_constant up s:shift -> c ~shift:(Some s)
+  | question -> S.Hole
 and atomic_term = located atomic_term_
 and parser atomic_shift =
   | plus i:pos_num -> S.Translate i

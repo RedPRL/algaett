@@ -12,21 +12,22 @@ module T = R.Tactic
 let unleash_hole loc : T.check =
   T.Check.peek @@ fun goal ->
   let bnds = R.Eff.Generalize.quote_ctx () in
-
-  let p =
+  let goal = R.Eff.quote goal.tp in
+  let top_tp =
     let make_pi bnd bdy =
       match bnd with
       | R.Eff.Generalize.VirType tp -> S.VirPi (tp, bdy)
       | R.Eff.Generalize.Type tp -> S.Pi (tp, bdy)
     in
-    let tp =
-      R.Eff.with_top_env @@ fun () ->
-      R.Eff.eval @@
-      List.fold_right make_pi bnds @@ R.Eff.quote goal.tp
-    in
-    Eff.unleash ?loc None @@ R.ResolveData.Axiom {tp}
+    S.vir_pi S.tp_ulvl @@ List.fold_right make_pi bnds @@ goal
   in
-
+  let p =
+    let vtp = R.Eff.with_top_env @@ fun () -> R.Eff.eval top_tp in
+    Eff.unleash ?loc None @@ R.ResolveData.Axiom {tp = vtp}
+  in
+  Format.printf "Unleashed hole %a@." CS.dump_name p;
+  List.iter R.Eff.Generalize.(function VirType tp | Type tp -> Format.printf "%a@." S.dump tp) bnds;
+  Format.printf "⊢ %a @." S.dump goal;
   T.Check.infer @@
   let head = R.Structural.global_var p @@ R.ULvl.base in
   let app _ (l, itm) = l + 1, R.Pi.app ~itm ~ctm:(T.Check.infer @@ R.Structural.level l) in
@@ -82,10 +83,10 @@ and check tm : T.check =
   | CS.Pair (tm1, tm2) ->
     R.Sigma.pair ~cfst:(check tm1) ~csnd:(check tm2)
   | CS.Univ s ->
-    R.Univ.univ (check_shift s)
+    R.Univ.univ @@ check_shift s
   | CS.Hole ->
     unleash_hole tm.loc
-  | _ -> T.Check.infer (infer tm)
+  | _ -> T.Check.infer @@ infer tm
 
 
 (* the public interface *)

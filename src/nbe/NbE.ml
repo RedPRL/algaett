@@ -18,4 +18,5 @@ let app_ulvl ~tp ~ulvl =
   match force_all tp with
   | VirPi (TpULvl, fam) ->
     inst_clo' fam ulvl
-  | _ -> invalid_arg "app_ulvl"
+  | tp ->
+    invalid_arg ("app_ulvl: " ^ Domain.debug_show_head tp)

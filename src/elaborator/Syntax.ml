@@ -2,9 +2,7 @@ open Asai
 
 type name = Yuujinchou.Trie.path
 
-let dump_name fmt n =
-  Format.fprintf fmt "@[%a@]"
-    (Format.pp_print_list ~pp_sep:(fun fmt () -> Format.pp_print_string fmt ".") Format.pp_print_string) n
+let dump_name = NbE.Syntax.dump_name
 
 type bound_name = name option
 
